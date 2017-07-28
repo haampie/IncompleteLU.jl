@@ -7,11 +7,11 @@ for k = 1 : n
   row = zeros(n); row[k:n] = A[k,k:n]
   col = zeros(n); col[k+1:n] = A[k+1:n,k]
 
-  for i = 1 : k - 1 && L[k,i] != 0
+  for i = 1 : k - 1 where L[k,i] != 0
     row -= L[k,i] * U[i,k:n]
   end
 
-  for i = 1 : k - 1 && U[i,k] != 0
+  for i = 1 : k - 1 where U[i,k] != 0
     col -= U[i,k] * L[k+1:n,i]
   end
 
