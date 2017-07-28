@@ -61,5 +61,7 @@ Issue (1) and (2) seem to be solved using a priority queue:
 1. We need to keep track of the first non-zero in each row of U after column `k`, in order to update `row`.
 2. Set up a min-PQ with `key = row` and `priority = column`
 3. At step `k`, when updating `col`, peek/pop until `priority` becomes > column `k`. This gives you the non-zeros in the `k`'th column of U.
-4. But rather than actually _popping_ we need to _update_ the priority to the next non-zero in the row (next non-zero is available because U is stored row-wise)
+4. But rather than actually *poppin* we need to *update* the priority to the next non-zero in the row (next non-zero is available because U is stored row-wise)
 5. Equivalently, set up a min-PQ with `key = column` and `priority = row` for the L-factor.
+
+**Subtle issue**: the U-factor updates the diagonal element, the L-factor does not. Popping in the U-prio-queue makes it impossible to update the diagonal element. Therefore pop the L-prio-queue first to compute the new row, then pop the U-prio-queue to compute the new column.
