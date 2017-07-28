@@ -65,3 +65,28 @@ Issue (1) and (2) seem to be solved using a priority queue:
 5. Equivalently, set up a min-PQ with `key = column` and `priority = row` for the L-factor.
 
 **Subtle issue**: the U-factor updates the diagonal element, the L-factor does not. Popping in the U-prio-queue makes it impossible to update the diagonal element. Therefore pop the L-prio-queue first to compute the new row, then pop the U-prio-queue to compute the new column.
+
+## Prio-queue example
+
+```julia
+A = sprand(5, 5, .3) + I
+full(A)
+ILU.csc_by_row_pq(A)
+```
+
+Outputs
+
+```
+5×5 Array{Float64,2}:
+ 1.15505   0.0  0.0  0.0       0.0
+ 0.0       1.0  0.0  0.362133  0.0
+ 0.0       0.0  1.0  0.0       0.0
+ 0.0       0.0  0.0  1.0       0.0
+ 0.476451  0.0  0.0  0.0       1.0
+
+1.1550452695900866 (1)
+1.0 (2) 0.36213344765906164 (4)
+1.0 (3)
+1.0 (4)
+0.47645076828880906 (1) 1.0 (5)
+```
