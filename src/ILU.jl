@@ -13,7 +13,7 @@ end
 
 lt(wrap::RowOrdering, left::Int, right::Int) = @inbounds return wrap.A.rowval[left] < wrap.A.rowval[right]
 
-function crout_ilu(A::SparseMatrixCSC{T}) where {T}
+function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
     n = size(A, 1)
 
     pq = PriorityQueue(collect(1 : n), A.colptr[1 : end - 1], RowOrdering(A))
@@ -121,8 +121,8 @@ function crout_ilu(A::SparseMatrixCSC{T}) where {T}
         ##
 
         # Append the columns
-        append_col!(U, U_row, k)
-        append_col!(L, L_col, k)
+        append_col!(U, U_row, k, τ)
+        append_col!(L, L_col, k, τ)
 
         # Add the new row and column to U_nonzero_col, L_nonzero_row, U_first, L_first
         # (First index *after* the diagonal)
@@ -136,17 +136,14 @@ function crout_ilu(A::SparseMatrixCSC{T}) where {T}
             push!(L_nonzero_row[L.rowval[L_first[k]]], k)
         end
 
-        # Don't need these entries anymore
-        empty!(U_nonzero_col[k])
-        empty!(L_nonzero_row[k])
-
-
         ##
         ## Clean up for next step
         ##
 
         empty!(L_col)
         empty!(U_row)
+        empty!(U_nonzero_col[k])
+        empty!(L_nonzero_row[k])
     end
 
     L, U
@@ -188,7 +185,6 @@ function crout(A::AbstractMatrix{T}; τ = 1e-3) where {T}
         # Update the final columns in L and U
         U[k, :] = z
         L[:, k] = w / U[k, k]
-        L[k, k] = one(T)
     end
 
     L, U

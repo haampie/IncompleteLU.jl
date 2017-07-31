@@ -80,21 +80,26 @@ can be added from top to bottom.
 Note: does *not* update `A.colptr` for columns > j + 1,
 as that is done automatically.
 """
-function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator{T,N}, j::Int) where {T,N}
+function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator{T,N}, j::Int, drop = zero(T)) where {T,N}
     # Sort the indices so we can traverse from top to bottom
     sort!(y.nzind, 1, y.n, Base.Sort.QuickSortAlg(), Base.Order.Forward)
     
+    total = 0
+    
     # or `for nzind = take(y.nzind, y.n)`
     for idx = 1 : y.n
-        # Filter and drop.
-        push!(A.rowval, y.nzind[idx])
+        row = y.nzind[idx]
+        value = y.nzval[y.full[row]]
 
-        # y.full[idx] gives the index of the nonzero
-        # maybe remove indirection by sorting nzval as well.
-        push!(A.nzval, y.nzval[y.full[y.nzind[idx]]])
+        if abs(value) ≥ drop || row == j
+            # Filter and drop.
+            push!(A.rowval, row)
+            push!(A.nzval, value)
+            total += 1
+        end
     end
 
-    A.colptr[j + 1] = A.colptr[j] + y.n
+    A.colptr[j + 1] = A.colptr[j] + total
 
     return
 end
