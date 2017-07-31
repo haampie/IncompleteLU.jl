@@ -26,8 +26,8 @@ function crout_ilu(A::SparseMatrixCSC{T}) where {T}
 
     # U_first[i] is the index of the first nonzero of U in row i after the diagonal
     # L_first[i] is the index of the first nonzero of L in column i after the diagonal
-    U_first = zeros(n)
-    L_first = zeros(n)
+    U_first = zeros(Int, n)
+    L_first = zeros(Int, n)
 
     # U_nonzero_col[i] is a vector of indices of nonzero elements in the i'th column of U before the diagonal
     # L_nonzero_row[i] is a vector of indices of nonzero elements in the i'th row of L before the diagonal
@@ -102,7 +102,7 @@ function crout_ilu(A::SparseMatrixCSC{T}) where {T}
 
             # Check if there is still another value in row `row` of U
             # if so, inform U_nonzero_col as well.
-            if U_first[row] != U.colptr[col + 1]
+            if U_first[row] != U.colptr[row + 1]
                 push!(U_nonzero_col[U.rowval[U_first[row]]], row)
             end
         end
@@ -124,6 +124,18 @@ function crout_ilu(A::SparseMatrixCSC{T}) where {T}
         append_col!(U, U_row, k)
         append_col!(L, L_col, k)
 
+        # Add the new row and column to U_nonzero_col, L_nonzero_row, U_first, L_first
+        # (First index *after* the diagonal)
+        U_first[k] = U.colptr[k] + 1
+        if U.colptr[k] != U.colptr[k + 1] - 1
+            push!(U_nonzero_col[U.rowval[U_first[k]]], k)
+        end
+
+        L_first[k] = L.colptr[k] + 1
+        if L.colptr[k] != L.colptr[k + 1] - 1
+            push!(L_nonzero_row[L.rowval[L_first[k]]], k)
+        end
+
 
         ##
         ## Clean up for next step
@@ -133,7 +145,7 @@ function crout_ilu(A::SparseMatrixCSC{T}) where {T}
         empty!(U_row)
     end
 
-    A, L, U
+    L, U
 end
 
 """
