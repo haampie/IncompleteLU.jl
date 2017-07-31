@@ -136,6 +136,10 @@ function crout_ilu(A::SparseMatrixCSC{T}) where {T}
             push!(L_nonzero_row[L.rowval[L_first[k]]], k)
         end
 
+        # Don't need these entries anymore
+        empty!(U_nonzero_col[k])
+        empty!(L_nonzero_row[k])
+
 
         ##
         ## Clean up for next step
