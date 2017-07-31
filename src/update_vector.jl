@@ -1,4 +1,5 @@
-import Base: empty!
+import Base: empty!, setindex!
+using Base.Test
 
 """
 SparseVectorAccumulator is a container that makes combining
@@ -38,39 +39,38 @@ function empty!(v::SparseVectorAccumulator)
 end
 
 """
-Make a linear combination of a SparseMatricCSC column with
-a SparseVectorAccumulator.
+Add a part of a SparseMatrixCSC column to a SparseVectorAccumulator,
+starting at a given index until the end.
 """
-function axpy!(a::T, mat::SparseMatrixCSC, column::Int, y::SparseVectorAccumulator{T,N}) where {T,N}
-    idx = mat.colptr[column]
-    next_column_index = mat.colptr[column + 1]
-
+function axpy!(a::T, A::SparseMatrixCSC, column::Int, start::Int, y::SparseVectorAccumulator{T,N}) where {T,N}
     # Loop over the whole column of A
-    while idx != next_column_index
-        row = mat.rowval[idx]
-
-        # Fill in.
-        if y.full[row] == 0
-
-            y.n += 1
-            y.full[row] = y.n
-
-            # Either push or overwrite.
-            if length(y.nzval) < y.n
-                push!(y.nzval, a * mat.nzval[idx])
-                push!(y.nzind, row)
-            else
-                y.nzval[y.n] = a * mat.nzval[idx]
-                y.nzind[y.n] = row
-            end
-        else # Just an update
-            y.nzval[y.full[row]] += a * mat.nzval[idx]
-        end
-
-        idx += 1
+    for idx = start : A.colptr[column + 1] - 1
+        row = A.rowval[idx]
+        add!(y, a * A.nzval[idx], row)
     end
 
     y
+end
+
+"""
+Does v[idx] += a.
+"""
+function add!(v::SparseVectorAccumulator{T,N}, a::T, idx::Int) where {T,N}
+    # Fill-in
+    if v.full[idx] == 0
+        v.n += 1
+        v.full[idx] = v.n
+
+        if length(v.nzval) < v.n
+            push!(v.nzval, a)
+            push!(v.nzind, idx)
+        else
+            v.nzval[v.n] = a
+            v.nzind[v.n] = idx
+        end
+    else # Update
+        v.nzval[v.full[idx]] += a
+    end
 end
 
 """
@@ -99,6 +99,17 @@ function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator{T,N}, j::Int
     return
 end
 
+function crout_ilu_attempt(A::SparseMatrixCSC)
+
+end
+
+
+
+
+
+
+### Tests
+
 """
 Computes B = A[:, 1 : end - 1] + A[:, 2 : end]
 """
@@ -108,11 +119,11 @@ function testing()
     v = SparseVectorAccumulator{Float64}(10)
 
     for i = 1 : 10
-        axpy!(1.0, A, i, v)
-        axpy!(1.0, A, i + 1, v)
+        axpy!(1.0, A, i, A.colptr[i], v)
+        axpy!(1.0, A, i + 1, A.colptr[i + 1], v)
         append_col!(B, v, i)
         empty!(v)
     end
 
-    A, B
+    @test full(A[:, 2 : end]) + full(A[:, 1 : end - 1]) == full(B)
 end
