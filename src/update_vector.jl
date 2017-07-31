@@ -72,3 +72,47 @@ function axpy!(a::T, mat::SparseMatrixCSC, column::Int, y::SparseVectorAccumulat
 
     y
 end
+
+"""
+Basically `A[:, j] = y`. TODO: dropping strategy
+Note: sorts the `nzind`'s of `y`, so that the column
+can be added from top to bottom.
+Note: does *not* update `A.colptr` for columns > j + 1,
+as that is done automatically.
+"""
+function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator{T,N}, j::Int) where {T,N}
+    # Sort the indices so we can traverse from top to bottom
+    sort!(y.nzind, 1, y.n, Base.Sort.QuickSortAlg(), Base.Order.Forward)
+    
+    # or `for nzind = take(y.nzind, y.n)`
+    for idx = 1 : y.n
+        # Filter and drop.
+        push!(A.rowval, y.nzind[idx])
+
+        # y.full[idx] gives the index of the nonzero
+        # maybe remove indirection by sorting nzval as well.
+        push!(A.nzval, y.nzval[y.full[y.nzind[idx]]])
+    end
+
+    A.colptr[j + 1] = A.colptr[j] + y.n
+
+    return
+end
+
+"""
+Computes B = A[:, 1 : end - 1] + A[:, 2 : end]
+"""
+function testing()
+    A = sprand(10, 11, .1) + 2I
+    B = spzeros(10, 10)
+    v = SparseVectorAccumulator{Float64}(10)
+
+    for i = 1 : 10
+        axpy!(1.0, A, i, v)
+        axpy!(1.0, A, i + 1, v)
+        append_col!(B, v, i)
+        empty!(v)
+    end
+
+    A, B
+end
