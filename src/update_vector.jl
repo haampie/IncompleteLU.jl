@@ -112,7 +112,3 @@ function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator{T,N}, j::Int
 
     return
 end
-
-
-### Tests
-
