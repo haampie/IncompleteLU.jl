@@ -1,4 +1,5 @@
-import Base: empty!, setindex!
+import Base: empty!, setindex!, convert
+
 using Base.Test
 
 """
@@ -24,6 +25,14 @@ SparseVectorAccumulator{T}(N::Int) where {T} = SparseVectorAccumulator{T,N}(
     T[],
     0
 )
+
+function convert(::Type{Vector}, v::SparseVectorAccumulator{T,M}) where {T,M}
+    x = zeros(T, M)
+    for i = 1 : v.n
+        x[v.nzind[i]] = v.nzval[i]
+    end
+    x
+end
 
 """
 Reset the vector to a vector of just zeros.
