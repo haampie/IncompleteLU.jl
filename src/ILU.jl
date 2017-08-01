@@ -157,45 +157,4 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
 
     ILUFactorization(L, U)
 end
-
-"""
-Dense indexing: reference example of Crout ILU
-"""
-function crout(A::AbstractMatrix{T}; τ = 1e-3) where {T}
-    n = size(A, 1)
-    L = zeros(A)
-    U = zeros(A)
-
-    for k = 1 : n
-
-        # Initialize the row & col
-        z = zeros(1, n)
-        z[k : n] = A[k, k : n]
-        w = zeros(n, 1)
-        w[k + 1 : n] = A[k + 1 : n, k]
-
-        for i = 1 : k - 1
-            if L[k, i] != zero(T)
-                z[k : n] -= L[k, i] * U[i, k : n]
-            end
-        end
-
-        # Initialize the column
-        for i = 1 : k - 1
-            if U[i, k] != zero(T)
-                w[k + 1 : n] -= U[i, k] * L[k + 1 : n, i]
-            end
-        end
-
-        # Apply dropping rule to row z and column w
-        map!(x -> abs(x) < τ ? zero(T) : x, z, z)
-        map!(x -> abs(x) < τ ? zero(T) : x, w, w)
-
-        # Update the final columns in L and U
-        U[k, :] = z
-        L[:, k] = w / U[k, k]
-    end
-
-    L, U
-end
 end
