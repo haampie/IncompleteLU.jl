@@ -74,8 +74,8 @@ end
         @test v.n == 0
         @test iszero(v.full)
         
-        add!(v, 1.0, 3)
+        add!(v, 1.0, 2)
         @test v.n == 1
-        @test convert(Vector, v) == [0.; 0.; 1.0]
+        @test convert(Vector, v) == [0.; 1.; 0.0]
     end
 end
