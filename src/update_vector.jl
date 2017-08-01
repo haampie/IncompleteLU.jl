@@ -83,7 +83,7 @@ function add!(v::SparseVectorAccumulator{T,N}, a::T, idx::Int) where {T,N}
 end
 
 """
-Basically `A[:, j] = y`. TODO: dropping strategy
+Basically `A[:, j] = y`.
 Note: sorts the `nzind`'s of `y`, so that the column
 can be added from top to bottom.
 Note: does *not* update `A.colptr` for columns > j + 1,
