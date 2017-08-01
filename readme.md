@@ -56,7 +56,7 @@ However, there is still the problem of loading a row of `A`. The current solutio
 
 Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit of fill-in.
 
-```
+```julia
 > using ILU
 > A = sprand(1000, 1000, 5 / 1000) + 10I
 > L, U = crout_ilu(A, τ = 0.001)
@@ -68,7 +68,7 @@ Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit 
 
 Full LU is obtained when the drop tolerance is `0.0`.
 
-```
+```julia
 > L, U = crout_ilu(A, τ = 0.)
 > vecnorm(L * U.' - A)
 1.484079220395129e-13
