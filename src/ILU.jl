@@ -116,15 +116,6 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
                 push!(U_nonzero_col[U.rowval[U_first[row]]], row)
             end
         end
-
-        U_diag_element = U_row.nzval[U_row.full[k]]
-
-        for i = 1 : L_col.n
-            L_col.nzval[i] /= U_diag_element
-        end
-
-        # Add a one to the diagonal.
-        add!(L_col, one(T), k)
     
         ## 
         ## Apply a drop rule
@@ -134,15 +125,22 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
         append_col!(U, U_row, k, τ)
         append_col!(L, L_col, k, τ)
 
+
+        U_diag_element = U_row.nzval[U_row.full[k]]
+
+        for i = L.colptr[k] : L.colptr[k + 1] - 1
+            L.nzval[i] /= U_diag_element
+        end
+
         # Add the new row and column to U_nonzero_col, L_nonzero_row, U_first, L_first
         # (First index *after* the diagonal)
         U_first[k] = U.colptr[k] + 1
-        if U.colptr[k] != U.colptr[k + 1] - 1
+        if U.colptr[k] < U.colptr[k + 1] - 1
             push!(U_nonzero_col[U.rowval[U_first[k]]], k)
         end
 
-        L_first[k] = L.colptr[k] + 1
-        if L.colptr[k] != L.colptr[k + 1] - 1
+        L_first[k] = L.colptr[k]
+        if L.colptr[k] < L.colptr[k + 1]
             push!(L_nonzero_row[L.rowval[L_first[k]]], k)
         end
 
