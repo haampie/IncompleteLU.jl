@@ -5,6 +5,8 @@ import Base.Order.lt
 
 using DataStructures
 
+export crout_ilu
+
 include("update_vector.jl")
 
 struct RowOrdering{matT <: SparseMatrixCSC} <: Ordering
@@ -18,11 +20,11 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
 
     pq = PriorityQueue(collect(1 : n), A.colptr[1 : end - 1], RowOrdering(A))
 
-    L = spzeros(n, n)
-    U = spzeros(n, n)
+    L = spzeros(T, n, n)
+    U = spzeros(T, n, n)
     
-    U_row = SparseVectorAccumulator{Float64}(n)
-    L_col = SparseVectorAccumulator{Float64}(n)
+    U_row = SparseVectorAccumulator{T}(n)
+    L_col = SparseVectorAccumulator{T}(n)
 
     # U_first[i] is the index of the first nonzero of U in row i after the diagonal
     # L_first[i] is the index of the first nonzero of L in column i after the diagonal
@@ -74,7 +76,7 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
         end
 
         # Copy the remaining part of the column into L_col
-        axpy!(1.0, A, k, get(pq, k, A.colptr[k + 1]), L_col)
+        axpy!(one(T), A, k, get(pq, k, A.colptr[k + 1]), L_col)
 
         ##
         ## Combine the vectors:
@@ -114,7 +116,7 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
         end
 
         # Add a one to the diagonal.
-        add!(L_col, 1.0, k)
+        add!(L_col, one(T), k)
     
         ## 
         ## Apply a drop rule
