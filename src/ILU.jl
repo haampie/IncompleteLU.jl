@@ -89,8 +89,8 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
         ## Combine the vectors:
         ##
         
-        # L_col[k+1:n] -= U[i,k] * L[i,k+1:n] for i = 1 : k - 1
-        # Immediately update L_first and L_nonzero_row
+        
+        # U_row[k:n] -= L[k,i] * U[i,k:n] for i = 1 : k - 1
         for col = L_nonzero_row[k]
             axpy!(-L.nzval[L_first[col]], U, col, U_first[col], U_row)
 
@@ -102,8 +102,9 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
                 push!(L_nonzero_row[L.rowval[L_first[col]]], col)
             end
         end
-
-        # U_row[k:n] -= L[k,i] * U[i,k:n] for i = 1 : k - 1
+        
+        # Nothing is happening here when k = n, maybe remove?
+        # L_col[k+1:n] -= U[i,k] * L[i,k+1:n] for i = 1 : k - 1
         for row = U_nonzero_col[k]
             axpy!(-U.nzval[U_first[row]], L, row, L_first[row], L_col)
 
