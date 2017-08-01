@@ -116,20 +116,3 @@ end
 
 ### Tests
 
-"""
-Computes B = A[:, 1 : end - 1] + A[:, 2 : end]
-"""
-function testing()
-    A = sprand(10, 11, .1) + 2I
-    B = spzeros(10, 10)
-    v = SparseVectorAccumulator{Float64}(10)
-
-    for i = 1 : 10
-        axpy!(1.0, A, i, A.colptr[i], v)
-        axpy!(1.0, A, i + 1, A.colptr[i + 1], v)
-        append_col!(B, v, i)
-        empty!(v)
-    end
-
-    @test full(A[:, 2 : end]) + full(A[:, 1 : end - 1]) == full(B)
-end
