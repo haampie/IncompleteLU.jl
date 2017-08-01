@@ -59,19 +59,21 @@ Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit 
 ```julia
 > using ILU
 > A = sprand(1000, 1000, 5 / 1000) + 10I
-> L, U = crout_ilu(A, τ = 0.001)
-> vecnorm(L * U.' - A)
-0.2753999717863117
-> (nnz(L - I) + nnz(U)) / nnz(A)
-2.7285592497868714
+> @time fact = crout_ilu(A, τ = 0.001)
+0.016897 seconds (70.16 k allocations: 2.833 MiB)
+> vecnorm((fact.L + I) * fact.U.' - A)
+0.05621960284815563
+> (nnz(fact.L) + nnz(fact.U)) / nnz(A)
+3.6649424328383113
 ```
 
 Full LU is obtained when the drop tolerance is `0.0`.
 
 ```julia
-> L, U = crout_ilu(A, τ = 0.)
-> vecnorm(L * U.' - A)
-1.484079220395129e-13
-> (nnz(L - I) + nnz(U)) / nnz(A)
-66.51270247229327
+> @time fact = crout_ilu(A, τ = 0.)
+0.917850 seconds (1.02 M allocations: 36.961 MiB, 1.03% gc time)
+> vecnorm((fact.L + I) * fact.U.' - A)
+1.5254763920353333e-13
+> (nnz(fact.L) + nnz(fact.U)) / nnz(A)
+65.19789754713833
 ```
