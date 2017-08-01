@@ -15,6 +15,13 @@ end
 
 lt(wrap::RowOrdering, left::Int, right::Int) = @inbounds return wrap.A.rowval[left] < wrap.A.rowval[right]
 
+struct ILUFactorization{T}
+    L::SparseMatrixCSC{T}
+    U::SparseMatrixCSC{T}
+end
+
+include("application.jl")
+
 function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
     n = size(A, 1)
 
@@ -148,7 +155,7 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
         empty!(L_nonzero_row[k])
     end
 
-    L, U
+    ILUFactorization(L, U)
 end
 
 """
