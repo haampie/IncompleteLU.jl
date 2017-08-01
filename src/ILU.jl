@@ -105,15 +105,17 @@ function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
         
         # Nothing is happening here when k = n, maybe remove?
         # L_col[k+1:n] -= U[i,k] * L[i,k+1:n] for i = 1 : k - 1
-        for row = U_nonzero_col[k]
-            axpy!(-U.nzval[U_first[row]], L, row, L_first[row], L_col)
+        if k < n
+            for row = U_nonzero_col[k]
+                axpy!(-U.nzval[U_first[row]], L, row, L_first[row], L_col)
 
-            U_first[row] += 1
+                U_first[row] += 1
 
-            # Check if there is still another value in row `row` of U
-            # if so, inform U_nonzero_col as well.
-            if U_first[row] != U.colptr[row + 1]
-                push!(U_nonzero_col[U.rowval[U_first[row]]], row)
+                # Check if there is still another value in row `row` of U
+                # if so, inform U_nonzero_col as well.
+                if U_first[row] != U.colptr[row + 1]
+                    push!(U_nonzero_col[U.rowval[U_first[row]]], row)
+                end
             end
         end
     
