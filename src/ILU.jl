@@ -7,6 +7,7 @@ using DataStructures
 
 export crout_ilu
 
+include("linked_list.jl")
 include("update_vector.jl")
 
 struct RowOrdering{matT <: SparseMatrixCSC} <: Ordering
