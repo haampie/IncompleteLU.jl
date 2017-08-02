@@ -23,7 +23,7 @@ end
 
 include("application.jl")
 
-function crout_ilu(A::SparseMatrixCSC{T}; τ = 1e-3) where {T}
+function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
     n = size(A, 1)
 
     pq = PriorityQueue(collect(1 : n), A.colptr[1 : end - 1], RowOrdering(A))
