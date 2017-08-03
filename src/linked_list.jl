@@ -1,7 +1,7 @@
 import Base: push!, empty!, start, next, done, getindex
 
 export LinkedLists, RowReader, 
-       nzval, next_in_row, 
+       nzval, nzidx, next_in_row, 
        first_in_row, next_column!, is_column
 
 """
@@ -63,6 +63,7 @@ go find the next one.
     return
 end
 
+@inline nzidx(r::RowReader, column::Int) = r.next_in_column[column]
 @inline nzval(r::RowReader, column::Int) = r.A.nzval[r.next_in_column[column]]
 @inline next_in_row(r::RowReader, column::Int) = r.rows.next[column]
 @inline first_in_row(r::RowReader, row::Int) = r.rows.head[row]
