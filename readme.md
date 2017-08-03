@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/haampie/ILU.jl.svg?branch=master)](https://travis-ci.org/haampie/ILU.jl)
+
 # SparseMatrixCSC → (Crout) ILU
 
 The Crout version of ILU loops roughly as follows:
