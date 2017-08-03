@@ -7,7 +7,7 @@ function go()
     srand(1)
     A = sprand(1_000, 1_000, 10 / 1_000) + 15I
     LU = crout_ilu(A)
-    Profile.clear()
+    Profile.clear_malloc_data()
     @profile crout_ilu(A)
 end
 

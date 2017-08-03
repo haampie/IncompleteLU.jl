@@ -21,8 +21,8 @@ end
 
 SparseVectorAccumulator{T}(N::Int) where {T} = SparseVectorAccumulator{T,N}(
     zeros(Int, N),
-    Int[],
-    T[],
+    zeros(Int, N),
+    zeros(T, N),
     0
 )
 
@@ -51,7 +51,7 @@ end
 Add a part of a SparseMatrixCSC column to a SparseVectorAccumulator,
 starting at a given index until the end.
 """
-@inline function axpy!(a::T, A::SparseMatrixCSC{T,I}, column::I, start::I, y::SparseVectorAccumulator{T,N}) where {T,N,I}
+function axpy!(a::T, A::SparseMatrixCSC{T,I}, column::I, start::I, y::SparseVectorAccumulator{T,N}) where {T,N,I}
     # Loop over the whole column of A
     for idx = start : A.colptr[column + 1] - 1
         add!(y, a * A.nzval[idx], A.rowval[idx])
@@ -68,14 +68,8 @@ function add!(v::SparseVectorAccumulator{T,N}, a::T, idx::Int) where {T,N}
     if v.full[idx] == 0
         v.n += 1
         v.full[idx] = v.n
-
-        if length(v.nzval) < v.n
-            push!(v.nzval, a)
-            push!(v.nzind, idx)
-        else
-            v.nzval[v.n] = a
-            v.nzind[v.n] = idx
-        end
+        v.nzval[v.n] = a
+        v.nzind[v.n] = idx
     else # Update
         v.nzval[v.full[idx]] += a
     end

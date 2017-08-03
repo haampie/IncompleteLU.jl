@@ -52,18 +52,16 @@ function RowReader(A::SparseMatrixCSC{T,I}, initialize::Type{Val{false}}) where 
     return RowReader(A, zeros(Int, n), LinkedLists(n))
 end
 
+nzidx(r::RowReader, column::Int) = r.next_in_column[column]
+nzrow(r::RowReader, column::Int) = r.A.rowval[nzidx(r, column)]
+nzval(r::RowReader, column::Int) = r.A.nzval[nzidx(r, column)]
 
-
-@inline nzidx(r::RowReader, column::Int) = r.next_in_column[column]
-@inline nzrow(r::RowReader, column::Int) = r.A.rowval[nzidx(r, column)]
-@inline nzval(r::RowReader, column::Int) = r.A.nzval[nzidx(r, column)]
-
-@inline has_next_nonzero(r::RowReader, column::Int) = nzidx(r, column) < r.A.colptr[column + 1]
-@inline enqueue_next_nonzero!(r::RowReader, column::Int) = push!(r.rows, nzrow(r, column), column)
-@inline next_column(r::RowReader, column::Int) = r.rows.next[column]
-@inline first_in_row(r::RowReader, row::Int) = r.rows.head[row]
-@inline is_column(column::Int) = column != 0
-@inline next_row!(r::RowReader, column::Int) = r.next_in_column[column] += 1
+has_next_nonzero(r::RowReader, column::Int) = nzidx(r, column) < r.A.colptr[column + 1]
+enqueue_next_nonzero!(r::RowReader, column::Int) = push!(r.rows, nzrow(r, column), column)
+next_column(r::RowReader, column::Int) = r.rows.next[column]
+first_in_row(r::RowReader, row::Int) = r.rows.head[row]
+is_column(column::Int) = column != 0
+next_row!(r::RowReader, column::Int) = r.next_in_column[column] += 1
 
 # function next_column!(r::RowReader, column::Int)
 #     next_column = next_in_row(r, column)
