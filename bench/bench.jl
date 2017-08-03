@@ -6,8 +6,8 @@ using BenchmarkTools
 function go()
     A = sprand(1_000, 1_000, 10 / 1_000) + 15I
     LU = crout_ilu(A)
-    Profile.clear_malloc_data()
-    LU = crout_ilu(A)
+    Profile.clear()
+    @profile crout_ilu(A)
 end
 
 function axpy_perf()

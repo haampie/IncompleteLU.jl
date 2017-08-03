@@ -79,6 +79,8 @@ function add!(v::SparseVectorAccumulator{T,N}, a::T, idx::Int) where {T,N}
     else # Update
         v.nzval[v.full[idx]] += a
     end
+
+    nothing
 end
 
 """
@@ -112,5 +114,5 @@ function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator{T,N}, j::Int
     A.colptr[j + 1] = A.colptr[j] + total
     y.n = 0
 
-    return
+    nothing
 end

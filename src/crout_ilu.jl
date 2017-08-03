@@ -16,13 +16,13 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
     L_reader = RowReader(L, Val{false})
     U_reader = RowReader(U, Val{false})
 
-    for k = 1 : n
+    @inbounds for k = 1 : n
 
         ##
         ## Copy the new row into U_row and the new column into L_col
         ##
-
-        col = first_in_row(A_reader, k)
+ 
+        col::Int = first_in_row(A_reader, k)
 
         while is_column(col)
             add!(U_row, nzval(A_reader, col), col)
