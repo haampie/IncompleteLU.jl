@@ -14,20 +14,19 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
     U_row = SparseVectorAccumulator{T}(n)
     L_col = SparseVectorAccumulator{T}(n)
 
+    L_reader = RowReader(L, Val{false})
+
     # U_first[i] is the index of the first nonzero of U in row i after the diagonal
     # L_first[i] is the index of the first nonzero of L in column i after the diagonal
     U_first = zeros(Int, n)
-    L_first = zeros(Int, n)
 
     # U_nonzero_col[i] is a vector of indices of nonzero elements in the i'th column of U before the diagonal
     # L_nonzero_row[i] is a vector of indices of nonzero elements in the i'th row of L before the diagonal
     U_nonzero_col = Vector{Vector{Int}}(n)
-    L_nonzero_row = Vector{Vector{Int}}(n)
 
     # Initialization
     for i = 1 : n
         U_nonzero_col[i] = Vector{Int}()
-        L_nonzero_row[i] = Vector{Int}()
     end
 
     for k = 1 : n
@@ -36,14 +35,20 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
         ## Copy the new row into U_row and the new column into L_col
         ##
 
-        column = first_in_row(A_reader, k)
+        col = first_in_row(A_reader, k)
 
-        while is_column(column)
-            if column ≥ k
-                add!(U_row, nzval(A_reader, column), column)
+        while is_column(col)
+            add!(U_row, nzval(A_reader, col), col)
+            next_col = next_column(A_reader, col)
+            next_row!(A_reader, col)
+
+            # Check if the next nonzero in this column
+            # is still above the diagonal
+            if has_next_nonzero(A_reader, col) && nzrow(A_reader, col) ≤ col
+                enqueue_next_nonzero!(A_reader, col)
             end
 
-            column = next_column!(A_reader, column)
+            col = next_col
         end
 
         # Copy the remaining part of the column into L_col
@@ -53,25 +58,27 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
         ## Combine the vectors:
         ##
         
-        
         # U_row[k:n] -= L[k,i] * U[i,k:n] for i = 1 : k - 1
-        for col = L_nonzero_row[k]
-            axpy!(-L.nzval[L_first[col]], U, col, U_first[col], U_row)
+        col = first_in_row(L_reader, k)
+        
+        while is_column(col)
+            axpy!(-nzval(L_reader, col), U, col, U_first[col], U_row)
 
-            L_first[col] += 1
+            next_col = next_column(L_reader, col)
+            next_row!(L_reader, col)
 
-            # If there is still another value in column `col` of L
-            # then add it to L_nonzero_row as well.
-            if L_first[col] != L.colptr[col + 1]
-                push!(L_nonzero_row[L.rowval[L_first[col]]], col)
+            if has_next_nonzero(L_reader, col)
+                enqueue_next_nonzero!(L_reader, col)
             end
+
+            col = next_col
         end
         
         # Nothing is happening here when k = n, maybe remove?
         # L_col[k+1:n] -= U[i,k] * L[i,k+1:n] for i = 1 : k - 1
         if k < n
             for row = U_nonzero_col[k]
-                axpy!(-U.nzval[U_first[row]], L, row, L_first[row], L_col)
+                axpy!(-U.nzval[U_first[row]], L, row, nzidx(L_reader, row), L_col)
 
                 U_first[row] += 1
 
@@ -105,9 +112,9 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
             push!(U_nonzero_col[U.rowval[U_first[k]]], k)
         end
 
-        L_first[k] = L.colptr[k]
+        L_reader.next_in_column[k] = L.colptr[k]
         if L.colptr[k] < L.colptr[k + 1]
-            push!(L_nonzero_row[L.rowval[L_first[k]]], k)
+            enqueue_next_nonzero!(L_reader, k)
         end
 
         ##
@@ -117,7 +124,6 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
         empty!(L_col)
         empty!(U_row)
         empty!(U_nonzero_col[k])
-        empty!(L_nonzero_row[k])
     end
 
     ILUFactorization(L, U)

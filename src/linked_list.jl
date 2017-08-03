@@ -1,8 +1,8 @@
 import Base: push!, empty!, start, next, done, getindex
 
 export LinkedLists, RowReader, 
-       nzval, nzidx, next_in_row, 
-       first_in_row, next_column!, is_column
+       nzval, nzidx, nzrow, next_column, enqueue_next_nonzero!,
+       first_in_row, next_row!, is_column
 
 """
 The factor L is stored column-wise, but we need
@@ -47,30 +47,26 @@ function RowReader(A::SparseMatrixCSC{T,I}) where {T,I}
     return RowReader(A, next_in_column, rows)
 end
 
-"""
-Once the nonzero in column `column` is visited,
-go find the next one.
-"""
-@inline function set_next_nonzero_in_column!(r::RowReader, column::Int)
-    r.next_in_column[column] += 1
-
-    # Push the next nonzero in the linked list in its corresponding row.
-    # Only if there is a nonzero left in the column of course.
-    if r.next_in_column[column] < r.A.colptr[column + 1]
-        push!(r.rows, r.A.rowval[r.next_in_column[column]], column)
-    end
-
-    return
+function RowReader(A::SparseMatrixCSC{T,I}, initialize::Type{Val{false}}) where {T,I}
+    n = size(A, 2)
+    return RowReader(A, zeros(Int, n), LinkedLists(n))
 end
+
+
 
 @inline nzidx(r::RowReader, column::Int) = r.next_in_column[column]
-@inline nzval(r::RowReader, column::Int) = r.A.nzval[r.next_in_column[column]]
-@inline next_in_row(r::RowReader, column::Int) = r.rows.next[column]
+@inline nzrow(r::RowReader, column::Int) = r.A.rowval[nzidx(r, column)]
+@inline nzval(r::RowReader, column::Int) = r.A.nzval[nzidx(r, column)]
+
+@inline has_next_nonzero(r::RowReader, column::Int) = nzidx(r, column) < r.A.colptr[column + 1]
+@inline enqueue_next_nonzero!(r::RowReader, column::Int) = push!(r.rows, nzrow(r, column), column)
+@inline next_column(r::RowReader, column::Int) = r.rows.next[column]
 @inline first_in_row(r::RowReader, row::Int) = r.rows.head[row]
 @inline is_column(column::Int) = column != 0
+@inline next_row!(r::RowReader, column::Int) = r.next_in_column[column] += 1
 
-function next_column!(r::RowReader, column::Int)
-    next_column = next_in_row(r, column)
-    set_next_nonzero_in_column!(r, column)
-    next_column
-end
+# function next_column!(r::RowReader, column::Int)
+#     next_column = next_in_row(r, column)
+#     r.next_in_column[column] += 1
+#     next_column
+# end
