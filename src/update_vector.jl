@@ -105,9 +105,12 @@ function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator{T,N}, j::Int
             push!(A.nzval, value)
             total += 1
         end
+
+        y.full[row] = 0
     end
 
     A.colptr[j + 1] = A.colptr[j] + total
+    y.n = 0
 
     return
 end

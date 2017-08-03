@@ -105,13 +105,6 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
         if L.colptr[k] < L.colptr[k + 1]
             enqueue_next_nonzero!(L_reader, k)
         end
-
-        ##
-        ## Clean up for next step
-        ##
-
-        empty!(L_col)
-        empty!(U_row)
     end
 
     ILUFactorization(L, U)

@@ -134,6 +134,19 @@ function bench_ILU()
     #   --------------
     #   samples:          107
     #   evals/sample:     1
+
+    # After emptying the fill-in vecs during copy.
+    #     BenchmarkTools.Trial:
+    #   memory estimate:  13.03 MiB
+    #   allocs estimate:  495823
+    #   --------------
+    #   minimum time:     41.930 ms (0.00% GC)
+    #   median time:      44.583 ms (2.25% GC)
+    #   mean time:        45.785 ms (1.38% GC)
+    #   maximum time:     66.683 ms (1.59% GC)
+    #   --------------
+    #   samples:          110
+    #   evals/sample:     1
 end
 
 end
