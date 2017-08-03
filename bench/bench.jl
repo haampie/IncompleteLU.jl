@@ -7,7 +7,22 @@ function go()
     A = sprand(1_000, 1_000, 10 / 1_000) + 15I
     LU = crout_ilu(A)
     Profile.clear_malloc_data()
-    @inbounds LU = crout_ilu(A)
+    LU = crout_ilu(A)
+end
+
+function axpy_perf()
+    A = sprand(1_000, 1_000, 10 / 1_000) + 15I
+    y = ILU.SparseVectorAccumulator{Float64}(1_000)
+
+    ILU.axpy!(1.0, A, 1, A.colptr[1], y)
+    ILU.axpy!(1.0, A, 2, A.colptr[2], y)
+    ILU.axpy!(1.0, A, 3, A.colptr[3], y)
+
+    Profile.clear_malloc_data()
+
+    ILU.axpy!(1.0, A, 1, A.colptr[1], y)
+    ILU.axpy!(1.0, A, 2, A.colptr[2], y)
+    ILU.axpy!(1.0, A, 3, A.colptr[3], y)
 end
 
 function sum_values_row_wise(A::SparseMatrixCSC)
@@ -93,6 +108,34 @@ function bench_ILU()
     #   --------------
     #   samples:          81
     #   evals/sample:     1
+
+    # After skipping off-diagonal elements in A
+    #     BenchmarkTools.Trial:
+    #   memory estimate:  15.96 MiB
+    #   allocs estimate:  545222
+    #   --------------
+    #   minimum time:     51.187 ms (0.00% GC)
+    #   median time:      55.767 ms (4.27% GC)
+    #   mean time:        56.586 ms (3.50% GC)
+    #   maximum time:     72.987 ms (7.53% GC)
+    #   --------------
+    #   samples:          89
+    #   evals/sample:     1
+
+    # After moving L and U to Row Reader structs
+    #     BenchmarkTools.Trial:
+    #   memory estimate:  13.03 MiB
+    #   allocs estimate:  495823
+    #   --------------
+    #   minimum time:     43.062 ms (0.00% GC)
+    #   median time:      46.205 ms (2.83% GC)
+    #   mean time:        47.076 ms (1.76% GC)
+    #   maximum time:     65.956 ms (1.96% GC)
+    #   --------------
+    #   samples:          107
+    #   evals/sample:     1
 end
 
 end
+
+Bench.go()
