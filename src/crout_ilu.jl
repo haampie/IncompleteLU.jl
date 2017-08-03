@@ -79,16 +79,17 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
                 col = next_col
             end
         end
-    
+
         ## 
         ## Apply a drop rule
         ##
 
         # Append the columns
+        U_diag_element = U_row.nzval[U_row.full[k]]
+        
         append_col!(U, U_row, k, τ)
         append_col!(L, L_col, k, τ)
 
-        U_diag_element = U_row.nzval[U_row.full[k]]
 
         for i = L.colptr[k] : L.colptr[k + 1] - 1
             L.nzval[i] /= U_diag_element
