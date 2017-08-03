@@ -2,7 +2,7 @@ import Base: push!, empty!, start, next, done, getindex
 
 export LinkedLists, RowReader, 
        nzval, nzidx, nzrow, next_column, enqueue_next_nonzero!,
-       first_in_row, next_row!, is_column
+       first_in_row, next_row!, is_column, has_next_nonzero
 
 """
 The factor L is stored column-wise, but we need

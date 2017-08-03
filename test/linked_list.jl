@@ -32,7 +32,15 @@ end
 
         while is_column(column)
             @test nzval(reader, column) == A[row, column]
-            column = next_column!(reader, column)
+
+            next_col = next_column(reader, column)
+            next_row!(reader, column)
+
+            if has_next_nonzero(reader, column)
+                enqueue_next_nonzero!(reader, column)
+            end
+
+            column = next_col
         end
     end
 end
