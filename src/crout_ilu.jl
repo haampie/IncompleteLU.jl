@@ -3,13 +3,6 @@ import Base.Order.lt
 
 export crout_ilu
 
-using DataStructures
-struct RowOrdering{matT <: SparseMatrixCSC} <: Ordering
-    A::matT
-end
-
-lt(wrap::RowOrdering, left::Int, right::Int) = @inbounds return wrap.A.rowval[left] < wrap.A.rowval[right]
-
 function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
     n = size(A, 1)
 
