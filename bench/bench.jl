@@ -4,6 +4,7 @@ using ILU
 using BenchmarkTools
 
 function go()
+    srand(1)
     A = sprand(1_000, 1_000, 10 / 1_000) + 15I
     LU = crout_ilu(A)
     Profile.clear()
