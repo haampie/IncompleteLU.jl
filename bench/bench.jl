@@ -48,7 +48,7 @@ function bench_alloc()
 end
 
 function bench_perf()
-    A = sprand(10_000, 10_000, 10 / 100_000) + 15I
+    A = sprand(10_000, 10_000, 10 / 10_000) + 15I
 
     @show sum_values_row_wise(A)
     @show sum_values_column_wise(A)
@@ -57,6 +57,42 @@ function bench_perf()
     snd = @benchmark Bench.sum_values_column_wise($A)
 
     fst, snd
+end
+
+function bench_ILU()
+    srand(1)
+    A = sprand(10_000, 10_000, 10 / 10_000) + 15I
+    LU = ILU.crout_ilu(A, τ = 0.1)
+    
+    @show nnz(LU.L) nnz(LU.U)
+    # nnz(LU.L) = 44836
+    # nnz(LU.U) = 54827
+
+    result = @benchmark ILU.crout_ilu($A, τ = 0.1)
+    # BenchmarkTools.Trial:
+    #   memory estimate:  16.24 MiB
+    #   allocs estimate:  545238
+    #   --------------
+    #   minimum time:     116.923 ms (0.00% GC)
+    #   median time:      127.514 ms (2.18% GC)
+    #   mean time:        130.932 ms (1.75% GC)
+    #   maximum time:     166.202 ms (3.05% GC)
+    #   --------------
+    #   samples:          39
+    #   evals/sample:     1
+
+    # After switching to row reader.
+    #     BenchmarkTools.Trial:
+    #   memory estimate:  15.96 MiB
+    #   allocs estimate:  545222
+    #   --------------
+    #   minimum time:     55.264 ms (0.00% GC)
+    #   median time:      61.872 ms (4.73% GC)
+    #   mean time:        61.906 ms (3.72% GC)
+    #   maximum time:     74.615 ms (4.12% GC)
+    #   --------------
+    #   samples:          81
+    #   evals/sample:     1
 end
 
 end
