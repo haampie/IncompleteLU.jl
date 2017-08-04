@@ -53,7 +53,7 @@ starting at a given index until the end.
 """
 function axpy!(a::T, A::SparseMatrixCSC{T,I}, column::I, start::I, y::SparseVectorAccumulator{T,N}) where {T,N,I}
     # Loop over the whole column of A
-    for idx = start : A.colptr[column + 1] - 1
+    @inbounds for idx = start : A.colptr[column + 1] - 1
         add!(y, a * A.nzval[idx], A.rowval[idx])
     end
 
