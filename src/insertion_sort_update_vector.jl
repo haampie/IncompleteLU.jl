@@ -1,27 +1,26 @@
 import Base: getindex, setindex!, indices, convert
 
-struct InsertableSparseVector{Tv,Ti<:Integer,N}
+struct InsertableSparseVector{Tv}
     values::Vector{Tv}
-    indices::SortedSet{Ti}
+    indices::SortedSet
+    n::Int
 
-    InsertableSparseVector{Tv,Ti,N}() where {Ti <: Integer,Tv,N} = new(Vector{Tv}(N), SortedSet(N))
+    InsertableSparseVector{Tv}(n::Int) where {Tv} = new(Vector{Tv}(n), SortedSet(n), n)
 end
 
-InsertableSparseVector{Tv}(n::Ti) where {Ti <: Integer,Tv} = InsertableSparseVector{Tv,Ti,n}()
-
-@inline getindex(v::InsertableSparseVector{Tv,Ti}, idx::Ti) where {Tv,Ti} = v.values[idx]
-@inline setindex!(v::InsertableSparseVector{Tv,Ti}, value::Tv, idx::Ti) where {Tv,Ti} = v.values[idx] = value
+@inline getindex(v::InsertableSparseVector{Tv}, idx::Int) where {Tv} = v.values[idx]
+@inline setindex!(v::InsertableSparseVector{Tv}, value::Tv, idx::Int) where {Tv} = v.values[idx] = value
 @inline indices(v::InsertableSparseVector) = convert(Vector, v.indices)
 
-function convert(::Type{Vector}, v::InsertableSparseVector{Tv,Ti,N}) where {Tv,Ti,N}
-    vals = zeros(Tv, N)
+function convert(::Type{Vector}, v::InsertableSparseVector{Tv}) where {Tv}
+    vals = zeros(Tv, v.n)
     for index in v.indices
         vals[index] = v.values[index]
     end
     return vals
 end
 
-@inline function add!(v::InsertableSparseVector{Tv,Ti}, a::Tv, idx::Ti, prev_idx::Ti) where {Tv,Ti}
+function add!(v::InsertableSparseVector{Tv}, a::Tv, idx::Int, prev_idx::Int) where {Tv}
     if push!(v.indices, idx, prev_idx)
         v[idx] = a
     else
@@ -31,8 +30,8 @@ end
     v
 end
 
-function axpy!(a::Tv, A::SparseMatrixCSC{Tv,Ti}, column::Ti, start::Ti, y::InsertableSparseVector{Tv,Ti,N}) where {Tv,Ti,N}
-    prev_index::Ti = N + one(Ti)
+function axpy!(a::Tv, A::SparseMatrixCSC{Tv}, column::Int, start::Int, y::InsertableSparseVector{Tv}) where {Tv}
+    prev_index = y.n + 1
     
     @inbounds for idx = start : A.colptr[column + 1] - 1
         add!(y, a * A.nzval[idx], A.rowval[idx], prev_index)
@@ -42,7 +41,7 @@ function axpy!(a::Tv, A::SparseMatrixCSC{Tv,Ti}, column::Ti, start::Ti, y::Inser
     y
 end
 
-function append_col!(A::SparseMatrixCSC{Tv}, y::InsertableSparseVector{Tv,Ti,N}, j::Ti, drop = zero(real(Tv))) where {Tv,Ti,N}
+function append_col!(A::SparseMatrixCSC{Tv}, y::InsertableSparseVector{Tv}, j::Int, drop = zero(real(Tv))) where {Tv}
     
     total = 0
     
@@ -57,7 +56,7 @@ function append_col!(A::SparseMatrixCSC{Tv}, y::InsertableSparseVector{Tv,Ti,N},
     A.colptr[j + 1] = A.colptr[j] + total
     
     # Reset
-    y.indices[N + 1] = N + 1
+    y.indices[y.n + 1] = y.n + 1
 
     nothing
 end

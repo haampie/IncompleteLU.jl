@@ -3,9 +3,9 @@ import Base: start, next, done, push!, convert, getindex, setindex!, show
 export SortedSet, init!
 
 """
-SortedSet keeps track of a sorted set of integers < N
+SortedSet keeps track of a sorted set of integers ≤ N
 using insertion sort with a linked list structure in a pre-allocated 
-vector. Requires O(N) memory. Insertion goes via a linear scan in O(n)
+vector. Requires O(N + 1) memory. Insertion goes via a linear scan in O(n)
 where `n` is the number of stored elements, but can be accelerated 
 by passing along a known value in the set (which is useful when pushing
 in an already sorted list). The insertion itself requires O(1) operations
@@ -19,33 +19,33 @@ for value in ints
 end
 ```
 """
-struct SortedSet{Ti <: Integer, N}
-    next::Vector{Ti}
-    function SortedSet{Ti, N}() where {Ti <: Integer, N}
-        next = Vector{Ti}(N)
-        next[N] = N
-        new(next)
+struct SortedSet
+    next::Vector{Int}
+    N::Int
+
+    function SortedSet(N::Int)
+        next = Vector{Int}(N + 1)
+        next[N + 1] = N + 1
+        new(next, N + 1)
     end
 end
 
-SortedSet(n::Ti) where {Ti <: Integer} = SortedSet{Ti, n + one(Ti)}()
-
 # Convenience wrappers for indexing
-@inline getindex(s::SortedSet{Ti}, i::Ti) where {Ti} = s.next[i]
-@inline setindex!(s::SortedSet{Ti}, value::Ti, i::Ti) where {Ti} = s.next[i] = value
+@inline getindex(s::SortedSet, i::Int) = s.next[i]
+@inline setindex!(s::SortedSet, value::Int, i::Int) = s.next[i] = value
 
 # Iterate in 
-@inline start(s::SortedSet{Ti,N}) where {Ti,N} = N
-@inline next(s::SortedSet{Ti}, p::Ti) where {Ti} = s[p], s[p]
-@inline done(s::SortedSet{Ti,N}, p::Ti) where {Ti,N} = s[p] == N
+@inline start(s::SortedSet) = s.N
+@inline next(s::SortedSet, p::Int) = s[p], s[p]
+@inline done(s::SortedSet, p::Int) = s[p] == s.N
 
 show(io::IO, ::MIME"text/plain", s::SortedSet) = print(io, typeof(s), " with values ", convert(Vector, s))
 
 """
 For debugging and testing
 """
-function convert(::Type{Vector}, s::SortedSet{Ti}) where {Ti}
-    v = Ti[]
+function convert(::Type{Vector}, s::SortedSet)
+    v = Int[]
     for index in s
         push!(v, index)
     end
@@ -63,7 +63,7 @@ end
 """
 Insert `index` after a known value `after`
 """
-function push!(s::SortedSet{Ti}, value::Ti, after::Ti) where {Ti}
+function push!(s::SortedSet, value::Int, after::Int)
     while s[after] < value
         after = s[after]
     end
@@ -77,4 +77,4 @@ function push!(s::SortedSet{Ti}, value::Ti, after::Ti) where {Ti}
     return true
 end
 
-@inline push!(s::SortedSet{Ti,N}, index::Ti) where {Ti,N} = push!(s, index, N)
+@inline push!(s::SortedSet, index::Int) = push!(s, index, s.N)
