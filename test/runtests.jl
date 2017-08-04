@@ -1,7 +1,7 @@
 using Base.Test
 using ILU
 
-include("sorted_list.jl")
+include("sorted_set.jl")
 include("linked_list.jl")
 include("application.jl")
 include("update_vector.jl")
