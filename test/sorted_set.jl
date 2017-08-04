@@ -1,10 +1,9 @@
-import ILU: SortedSet, init!, push!
+import ILU: SortedSet, push!
 using Base.Test
 
 @testset "Sorted indices" begin
     @testset "New values" begin
         indices = SortedSet(10)
-        init!(indices, 3)
         @test push!(indices, 5)
         @test push!(indices, 7)
         @test push!(indices, 4)
@@ -12,20 +11,21 @@ using Base.Test
         @test push!(indices, 8)
 
         as_vec = convert(Vector, indices)
-        @test as_vec == [3, 4, 5, 6, 7, 8]
+        @test as_vec == [4, 5, 6, 7, 8]
     end
 
     @testset "Duplicate values" begin
         indices = SortedSet(10)
-        init!(indices, 3)
+        @test push!(indices, 3)
         @test push!(indices, 3) == false
         @test push!(indices, 8)
         @test push!(indices, 8) == false
+        @test convert(Vector, indices) == [3, 8]
     end
 
     @testset "Quick insertion with known previous index" begin
         indices = SortedSet(10)
-        init!(indices, 3)
+        @test push!(indices, 3)
         @test push!(indices, 4, 3)
         @test push!(indices, 8, 4)
         @test convert(Vector, indices) == [3, 4, 8]

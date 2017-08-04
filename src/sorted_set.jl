@@ -1,4 +1,4 @@
-import Base: start, next, done, push!, convert, getindex, setindex!
+import Base: start, next, done, push!, convert, getindex, setindex!, show
 
 export SortedSet, init!
 
@@ -21,7 +21,11 @@ end
 """
 struct SortedSet{Ti <: Integer, N}
     next::Vector{Ti}
-    SortedSet{Ti, N}() where {Ti <: Integer, N} = new(Vector{Ti}(N + one(Ti)))
+    function SortedSet{Ti, N}() where {Ti <: Integer, N}
+        next = Vector{Ti}(N)
+        next[N] = N
+        new(next)
+    end
 end
 
 SortedSet(n::Ti) where {Ti <: Integer} = SortedSet{Ti, n + one(Ti)}()
@@ -35,10 +39,12 @@ start(s::SortedSet{Ti,N}) where {Ti,N} = N
 next(s::SortedSet{Ti}, p::Ti) where {Ti} = s[p], s[p]
 done(s::SortedSet{Ti,N}, p::Ti) where {Ti,N} = s[p] == N
 
+show(io::IO, ::MIME"text/plain", s::SortedSet) = print(io, typeof(s), " with values ", convert(Vector, s))
+
 """
 For debugging and testing
 """
-function convert(Vector, s::SortedSet{Ti}) where {Ti}
+function convert(::Type{Vector}, s::SortedSet{Ti}) where {Ti}
     v = Ti[]
     for index in s
         push!(v, index)
@@ -46,13 +52,13 @@ function convert(Vector, s::SortedSet{Ti}) where {Ti}
     return v
 end
 
-"""
-Insert the first value 
-"""
-function init!(s::SortedSet{Ti,N}, value::Ti) where {Ti,N}
-    s[value], s[N] = N, value
-    return s
-end
+# """
+# Insert the first value 
+# """
+# function init!(s::SortedSet{Ti,N}, value::Ti) where {Ti,N}
+#     s[value], s[N] = N, value
+#     return s
+# end
 
 """
 Insert `index` after a known value `after`
