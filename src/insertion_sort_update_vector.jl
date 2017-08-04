@@ -9,11 +9,11 @@ end
 
 InsertableSparseVector{Tv}(n::Ti) where {Ti <: Integer,Tv} = InsertableSparseVector{Tv,Ti}(n)
 
-getindex(v::InsertableSparseVector{Tv,Ti}, idx::Ti) where {Tv,Ti} = v.values[idx]
-setindex!(v::InsertableSparseVector{Tv,Ti}, value::Tv, idx::Ti) where {Tv,Ti} = v.values[idx] = value
-indices(v::InsertableSparseVector) = convert(Vector, v.indices)
+@inline getindex(v::InsertableSparseVector{Tv,Ti}, idx::Ti) where {Tv,Ti} = v.values[idx]
+@inline setindex!(v::InsertableSparseVector{Tv,Ti}, value::Tv, idx::Ti) where {Tv,Ti} = v.values[idx] = value
+@inline indices(v::InsertableSparseVector) = convert(Vector, v.indices)
 
-function add!(v::InsertableSparseVector{Tv,Ti}, a::Tv, idx::Ti) where {Tv,Ti}
+@inline function add!(v::InsertableSparseVector{Tv,Ti}, a::Tv, idx::Ti) where {Tv,Ti}
     if push!(v.indices, idx)
         v[idx] = a
     else

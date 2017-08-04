@@ -31,13 +31,13 @@ end
 SortedSet(n::Ti) where {Ti <: Integer} = SortedSet{Ti, n + one(Ti)}()
 
 # Convenience wrappers for indexing
-getindex(s::SortedSet{Ti}, i::Ti) where {Ti} = s.next[i]
-setindex!(s::SortedSet{Ti}, value::Ti, i::Ti) where {Ti} = s.next[i] = value
+@inline getindex(s::SortedSet{Ti}, i::Ti) where {Ti} = s.next[i]
+@inline setindex!(s::SortedSet{Ti}, value::Ti, i::Ti) where {Ti} = s.next[i] = value
 
 # Iterate in 
-start(s::SortedSet{Ti,N}) where {Ti,N} = N
-next(s::SortedSet{Ti}, p::Ti) where {Ti} = s[p], s[p]
-done(s::SortedSet{Ti,N}, p::Ti) where {Ti,N} = s[p] == N
+@inline start(s::SortedSet{Ti,N}) where {Ti,N} = N
+@inline next(s::SortedSet{Ti}, p::Ti) where {Ti} = s[p], s[p]
+@inline done(s::SortedSet{Ti,N}, p::Ti) where {Ti,N} = s[p] == N
 
 show(io::IO, ::MIME"text/plain", s::SortedSet) = print(io, typeof(s), " with values ", convert(Vector, s))
 
@@ -77,4 +77,4 @@ function push!(s::SortedSet{Ti}, value::Ti, after::Ti) where {Ti}
     return true
 end
 
-push!(s::SortedSet{Ti,N}, index::Ti) where {Ti,N} = push!(s, index, N)
+@inline push!(s::SortedSet{Ti,N}, index::Ti) where {Ti,N} = push!(s, index, N)
