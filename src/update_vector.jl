@@ -1,4 +1,4 @@
-import Base: empty!, setindex!, convert
+import Base: setindex!, convert
 
 using Base.Test
 
@@ -32,19 +32,6 @@ function convert(::Type{Vector}, v::SparseVectorAccumulator{T,M}) where {T,M}
         x[v.nzind[i]] = v.nzval[i]
     end
     x
-end
-
-"""
-Reset the vector to a vector of just zeros.
-Don't bother shrinking or zero'ing out the previous
-nonzeros or their indices.
-"""
-function empty!(v::SparseVectorAccumulator)
-    for i = 1 : v.n
-        v.full[v.nzind[i]] = 0
-    end
-
-    v.n = 0
 end
 
 """

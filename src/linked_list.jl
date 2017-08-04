@@ -1,4 +1,4 @@
-import Base: push!, empty!, start, next, done, getindex
+import Base: push!, start, next, done, getindex
 
 export LinkedLists, RowReader, 
        nzval, nzidx, nzrow, next_column, enqueue_next_nonzero!,
