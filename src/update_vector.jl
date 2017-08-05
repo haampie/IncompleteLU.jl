@@ -72,7 +72,7 @@ can be added from top to bottom.
 Note: does *not* update `A.colptr` for columns > j + 1,
 as that is done automatically.
 """
-function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::Int, drop = zero(Tv)) where {Tv}
+function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::Int, drop::Tv, scale::Tv = one(Tv)) where {Tv}
     # Sort the indices so we can traverse from top to bottom
     sort!(y.nzind, 1, y.n, Base.Sort.QuickSortAlg(), Base.Order.Forward)
     

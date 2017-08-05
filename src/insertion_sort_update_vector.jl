@@ -30,6 +30,8 @@ function add!(v::InsertableSparseVector{Tv}, a::Tv, idx::Int, prev_idx::Int) whe
     v
 end
 
+@inline add!(v::InsertableSparseVector{Tv}, a::Tv, idx::Int) where {Tv} = add!(v, a, idx, v.indices.N)
+
 function axpy!(a::Tv, A::SparseMatrixCSC{Tv}, column::Int, start::Int, y::InsertableSparseVector{Tv}) where {Tv}
     prev_index = y.n + 1
     
@@ -41,14 +43,14 @@ function axpy!(a::Tv, A::SparseMatrixCSC{Tv}, column::Int, start::Int, y::Insert
     y
 end
 
-function append_col!(A::SparseMatrixCSC{Tv}, y::InsertableSparseVector{Tv}, j::Int, drop = zero(real(Tv))) where {Tv}
+function append_col!(A::SparseMatrixCSC{Tv}, y::InsertableSparseVector{Tv}, j::Int, drop::Tv, scale::Tv = one(Tv)) where {Tv}
     
     total = 0
     
     for row = y.indices
         if abs(y[row]) ≥ drop || row == j
             push!(A.rowval, row)
-            push!(A.nzval, y[row])
+            push!(A.nzval, scale * y[row])
             total += 1
         end
     end
