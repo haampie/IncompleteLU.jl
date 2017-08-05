@@ -1,5 +1,7 @@
 module ILU
 
+export ILUFactorization
+
 struct ILUFactorization{T}
     L::SparseMatrixCSC{T}
     U::SparseMatrixCSC{T}
