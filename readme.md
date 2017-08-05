@@ -52,7 +52,10 @@ At step `k` we load (part of) a row and column of the matrix `A`, and subtract t
 
 The latter problem can be worked around without expensive searches. It's basically smart bookkeeping: going from step `k` to `k+1` requires updating indices to the next nonzero of each row of `U` after column `k`. If you now store for each column of `U` a list of nonzero indices, this is the moment you can update it. Similarly for the `L` factor.
 
-However, there is still the problem of loading a row of `A`. The current solution is to maintain a priority queue which stores the next unvisited element of each column. The key is its column, the value is its `idx` and the ordering is its `rowval`. The priority queue is read until an element of the next row is reached. Rather than popping the min element, its value is incremented, which means that it is replaced by the next non-zero in the same column. Once there are no elements left in the column, it is dequeued.
+The matrix `A` can be read row by row as well with the same trick.
+
+## Accumulating a new sparse row or column
+At each step a temporary column or row of the `L` and `U` factors is created as a linear combination of previous columns and rows. We don't get these values in sorted order. At this point the fastest structure for keeping track of the indices of the temporary vector is just insertion sort using `InsertableSparseVector`. Another possibility is `SparseVectorAccumulator` which delays sorting until the temporary vector is copied to the `L` or `U` factor.
 
 ## Example
 
@@ -62,20 +65,20 @@ Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit 
 > using ILU
 > A = sprand(1000, 1000, 5 / 1000) + 10I
 > @time fact = crout_ilu(A, τ = 0.001)
-0.016897 seconds (70.16 k allocations: 2.833 MiB)
+  0.005182 seconds (100 allocations: 1.167 MiB)
 > vecnorm((fact.L + I) * fact.U.' - A)
-0.05621960284815563
+0.05610746209883846
 > (nnz(fact.L) + nnz(fact.U)) / nnz(A)
-3.6649424328383113
+3.670773780187284
 ```
 
 Full LU is obtained when the drop tolerance is `0.0`.
 
 ```julia
-> @time fact = crout_ilu(A, τ = 0.)
-0.917850 seconds (1.02 M allocations: 36.961 MiB, 1.03% gc time)
+>  @time fact = crout_ilu(A, τ = 0.)
+  0.400229 seconds (116 allocations: 12.167 MiB, 0.41% gc time)
 > vecnorm((fact.L + I) * fact.U.' - A)
-1.5254763920353333e-13
+1.532520861565543e-13
 > (nnz(fact.L) + nnz(fact.U)) / nnz(A)
-65.19789754713833
+61.66009528503368
 ```
