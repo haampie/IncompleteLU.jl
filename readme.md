@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/haampie/ILU.jl.svg?branch=master)](https://travis-ci.org/haampie/ILU.jl)
+[![Build Status](https://travis-ci.org/haampie/ILU.jl.svg?branch=master)](https://travis-ci.org/haampie/ILU.jl) [![codecov](https://codecov.io/gh/haampie/ILU.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/haampie/ILU.jl)
 
 # SparseMatrixCSC → (Crout) ILU
 
