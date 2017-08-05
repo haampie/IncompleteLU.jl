@@ -9,8 +9,8 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
     L = spzeros(T, n, n)
     U = spzeros(T, n, n)
     
-    U_row = InsertableSparseVector{T}(n)
-    L_col = InsertableSparseVector{T}(n)
+    U_row = SparseVectorAccumulator{T}(n)
+    L_col = SparseVectorAccumulator{T}(n)
 
     A_reader = RowReader(A)
     L_reader = RowReader(L, Val{false})
@@ -25,7 +25,7 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
         col::Int = first_in_row(A_reader, k)
 
         while is_column(col)
-            add!(U_row, nzval(A_reader, col), col, n + 1)
+            add!(U_row, nzval(A_reader, col), col)
             next_col = next_column(A_reader, col)
             next_row!(A_reader, col)
 
@@ -84,13 +84,15 @@ function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
         ## Apply a drop rule
         ##
 
+        U_diag_element = U_row.nzval[U_row.full[k]]
+
         # Append the columns        
         append_col!(U, U_row, k, τ)
         append_col!(L, L_col, k, τ)
 
 
         for i = L.colptr[k] : L.colptr[k + 1] - 1
-            L.nzval[i] /= U_row.values[k]
+            L.nzval[i] /= U_diag_element
         end
 
         # Add the new row and column to U_nonzero_col, L_nonzero_row, U_first, L_first
