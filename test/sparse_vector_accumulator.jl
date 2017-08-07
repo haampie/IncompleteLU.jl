@@ -31,24 +31,36 @@ import ILU: SparseVectorAccumulator, add!, axpy!, append_col!, isoccupied
     end
 
     @testset "Append column to SparseMatrixCSC" begin
+        A = spzeros(5, 5)
         v = SparseVectorAccumulator{Float64}(5)
+
         add!(v, 0.3, 1)
         add!(v, 0.009, 3)
         add!(v, 0.12, 4)
         add!(v, 0.007, 5)
-
-        A = spzeros(5, 5)
         append_col!(A, v, 1, 0.1)
 
         # Test whether the column is copied correctly
         # and the dropping rule is applied
         @test A[1, 1] == 0.3
-        @test A[2, 1] == 0.0
-        @test A[3, 1] == 0.0
+        @test A[2, 1] == 0.0 # zero
+        @test A[3, 1] == 0.0 # dropped
         @test A[4, 1] == 0.12
-        @test A[5, 1] == 0.0
+        @test A[5, 1] == 0.0 # dropped
 
         # Test whether the InsertableSparseVector is reset
-        @test iszero(convert(Vector, v))
+        # when reusing it for the second column. Also do
+        # scaling with a factor of 10.
+        add!(v, 0.5, 2)
+        add!(v, 0.009, 3)
+        add!(v, 0.5, 4)
+        add!(v, 0.007, 5)
+        append_col!(A, v, 2, 0.1, 10.0)
+
+        @test A[1, 2] == 0.0 # zero
+        @test A[2, 2] == 5.0 # scaled
+        @test A[3, 2] == 0.0 # dropped
+        @test A[4, 2] == 5.0 # scaled
+        @test A[5, 2] == 0.0 # dropped
     end
 end
