@@ -130,4 +130,4 @@ norm(b - A * x_without) = 1.0806003685676213e-6
 without = Trial(16.415 ms)
 ```
 
-![Residual norm with preconditioner](residual.svg)
+![Residual norm with preconditioner](https://haampie.github.io/ILU.jl/residual.png)
