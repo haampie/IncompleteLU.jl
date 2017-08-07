@@ -6,7 +6,7 @@ import ILU: SparseVectorAccumulator, add!, axpy!, append_col!
     let
         v = SparseVectorAccumulator{Float64}(10)
         @test iszero(v.n)
-        @test iszero(v.full)
+        @test iszero(v.occupied)
     end
 
     @testset "Add to SparseVectorAccumulator" begin
@@ -15,11 +15,11 @@ import ILU: SparseVectorAccumulator, add!, axpy!, append_col!
         add!(v, 1.0, 3)
         add!(v, 3.0, 2)
         @test v.n == 2
-        @test v.full[3] == 1
-        @test v.full[2] == 2
+        @test v.occupied[3] == 1
+        @test v.occupied[2] == 1
         @test v.nzind[1] == 3
         @test v.nzind[2] == 2
-        @test v.nzval[1] == 2.0
+        @test v.nzval[3] == 2.0
         @test v.nzval[2] == 3.0
         @test convert(Vector, v) == [0; 3.0; 2.0]
     end

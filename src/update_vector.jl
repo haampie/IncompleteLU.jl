@@ -3,35 +3,36 @@ import Base: setindex!, convert
 """
 SparseVectorAccumulator is a container that makes combining
 columns of a SparseMatrixCSC cheap. It extends SparseVector
-with one full vector and also does not keep `nzind` sorted.
-This allows cheap insertions.
-full = [0, 1, 0, 2, 0, 0, 0]
-nzind = [2, 4]
-nzval = [.1234, .435]
+with two full vectors and also does not keep `nzind` sorted.
+This allows O(1) insertions.
+occupied = [0, 1, 0, 1, 0, 0, 0]
+nzind = [2, 4, 0, 0, 0, 0]
+nzval = [0., .1234, 0., .435, 0., 0., 0.]
 n = 2
 length = 7
+curr = 1
 """
 mutable struct SparseVectorAccumulator{T}
-    full::Vector{Int}
+    occupied::Vector{Int}
     nzind::Vector{Int}
     nzval::Vector{T}
     n::Int
     length::Int
+    curr::Int
 
     SparseVectorAccumulator{T}(N::Int) where {T} = new(
         zeros(Int, N),
-        Int[],
-        T[],
+        Vector{Int}(N),
+        Vector{T}(N),
         0,
-        N
+        N,
+        1
     )
 end
 
 function convert(::Type{Vector}, v::SparseVectorAccumulator{T}) where {T}
     x = zeros(T, v.length)
-    for i = 1 : v.n
-        x[v.nzind[i]] = v.nzval[i]
-    end
+    x[v.nzind[1 : v.n]] = v.nzval[v.nzind[1 : v.n]]
     x
 end
 
@@ -53,18 +54,13 @@ Does v[idx] += a.
 """
 function add!(v::SparseVectorAccumulator{Tv}, a::Tv, idx::Int) where {Tv}
     # Fill-in
-    if v.full[idx] == 0
+    if v.occupied[idx] != v.curr
         v.n += 1
-        v.full[idx] = v.n
-        if length(v.nzval) < v.n
-            push!(v.nzval, a)
-            push!(v.nzind, idx)
-        else
-            v.nzval[v.n] = a
-            v.nzind[v.n] = idx
-        end
+        v.occupied[idx] = v.curr
+        v.nzval[idx] = a
+        v.nzind[v.n] = idx
     else # Update
-        v.nzval[v.full[idx]] += a
+        v.nzval[idx] += a
     end
 
     nothing
@@ -78,26 +74,29 @@ Note: does *not* update `A.colptr` for columns > j + 1,
 as that is done automatically.
 """
 function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::Int, drop::Tv, scale::Tv = one(Tv)) where {Tv}
-    # Sort the indices so we can traverse from top to bottom
-    sort!(y.nzind, 1, y.n, Base.Sort.QuickSortAlg(), Base.Order.Forward)
-    
+    # Move the indices of interest up front
     total = 0
-    
+
     for idx = 1 : y.n
         row = y.nzind[idx]
-        value = y.nzval[y.full[row]]
+        value = y.nzval[row]
 
         if abs(value) ≥ drop || row == j
-            # Filter and drop.
-            push!(A.rowval, row)
-            push!(A.nzval, scale * value)
             total += 1
+            y.nzind[total] = row
         end
+    end
 
-        y.full[row] = 0
+    sort!(y.nzind, 1, total, Base.Sort.QuickSortAlg(), Base.Order.Forward)
+    
+    for idx = 1 : total
+        row = y.nzind[idx]
+        push!(A.rowval, row)
+        push!(A.nzval, scale * y.nzval[row])
     end
 
     A.colptr[j + 1] = A.colptr[j] + total
+    y.curr += 1
     y.n = 0
 
     nothing
