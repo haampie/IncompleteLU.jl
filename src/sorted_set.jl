@@ -1,6 +1,6 @@
 import Base: start, next, done, push!, convert, getindex, setindex!, show
 
-export SortedSet, init!
+export SortedSet
 
 """
 SortedSet keeps track of a sorted set of integers ≤ N
@@ -51,14 +51,6 @@ function convert(::Type{Vector}, s::SortedSet)
     end
     return v
 end
-
-# """
-# Insert the first value 
-# """
-# function init!(s::SortedSet{Ti,N}, value::Ti) where {Ti,N}
-#     s[value], s[N] = N, value
-#     return s
-# end
 
 """
 Insert `index` after a known value `after`
