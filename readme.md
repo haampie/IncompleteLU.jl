@@ -1,8 +1,8 @@
 [![Build Status](https://travis-ci.org/haampie/ILU.jl.svg?branch=master)](https://travis-ci.org/haampie/ILU.jl) [![codecov](https://codecov.io/gh/haampie/ILU.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/haampie/ILU.jl)
 
-# SparseMatrixCSC → (Crout) ILU
+# ILU for SparseMatrixCSC
 
-The Crout version of ILU loops roughly as follows:
+This package implements the left-looking or Crout version of ILU for the `SparseMatrixCSC` type. The basic algorithm loops roughly as follows:
 
 ```
 for k = 1 : n
@@ -24,6 +24,8 @@ for k = 1 : n
   L[k,k] = 1
 end
 ```
+
+which means that at each step `k` a complete row and column are computed based on the previous rows and columns:
 
 ```
           k
@@ -48,14 +50,16 @@ end
 col and row are the .'s, updated by the x's.
 ```
 
-At step `k` we load (part of) a row and column of the matrix `A`, and subtract the previous rows and columns. The problem is that our matrix is column-major, so that loading a row is not cheap. Secondly, it makes sense to store the `L` factor column-wise and the `U` factor row-wise, yet we need access to a row of `L` and a column of `U`.
+At step `k` we load (part of) a row and column of the matrix `A`, and subtract the previous rows and columns times a scalar (basically a SpMV product). The problem is that our matrix is column-major, so that loading a row is not cheap. Secondly, it makes sense to store the `L` factor column-wise and the `U` factor row-wise (so that we can append columns and rows without data movement), yet we need access to a row of `L` and a column of `U`.
 
 The latter problem can be worked around without expensive searches. It's basically smart bookkeeping: going from step `k` to `k+1` requires updating indices to the next nonzero of each row of `U` after column `k`. If you now store for each column of `U` a list of nonzero indices, this is the moment you can update it. Similarly for the `L` factor.
 
 The matrix `A` can be read row by row as well with the same trick.
 
 ## Accumulating a new sparse row or column
-At each step a temporary column or row of the `L` and `U` factors is created as a linear combination of previous columns and rows. We don't get these values in sorted order. At this point the fastest structure for keeping track of the indices of the temporary vector is just insertion sort using `InsertableSparseVector`. Another possibility is `SparseVectorAccumulator` which delays sorting until the temporary vector is copied to the `L` or `U` factor.
+Throughout the steps two temporary row and column accumulators are used to store the linear combinations of previous sparse rows and columns. There are two implementations of this accumulator: the `SparseVectorAccumulator` performs insertion in `O(1)`, but stores the indices unordered; therefore a sort is required when appending to the `SparseMatrixCSC`. The `InsertableSparseVector` performs insertion sort, which can be slow, but turns out to be fast in practice. The latter is a result of insertion itself being an `O(1)` operation due to a linked list structure, and the fact that sorted vectors are added, so that the linear scan does not have to restart at each insertion.
+
+The advantage of `SparseVectorAccumulator` over `InsertableSparseVector` is that the former postpones sorting until after dropping, while `InsertableSparseVector` also performs insertion sort on dropped values.
 
 ## Example
 
