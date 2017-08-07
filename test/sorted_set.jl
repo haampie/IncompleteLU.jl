@@ -30,4 +30,11 @@ using Base.Test
         @test push!(indices, 8, 4)
         @test convert(Vector, indices) == [3, 4, 8]
     end
+
+    @testset "Pretty printing" begin
+        indices = SortedSet(10)
+        push!(indices, 3)
+        push!(indices, 2)
+        @test contains(sprint(show, indices), "with values")
+    end
 end

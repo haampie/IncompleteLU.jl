@@ -39,7 +39,7 @@ end
 @inline next(s::SortedSet, p::Int) = s[p], s[p]
 @inline done(s::SortedSet, p::Int) = s[p] == s.N
 
-show(io::IO, ::MIME"text/plain", s::SortedSet) = print(io, typeof(s), " with values ", convert(Vector, s))
+show(io::IO, s::SortedSet) = print(io, typeof(s), " with values ", convert(Vector, s))
 
 """
 For debugging and testing
