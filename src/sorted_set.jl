@@ -1,4 +1,5 @@
-import Base: start, next, done, push!, convert, getindex, setindex!, show
+import Base: start, next, done, push!, 
+       convert, getindex, setindex!, show, empty!
 
 export SortedSet
 
@@ -68,5 +69,10 @@ function push!(s::SortedSet, value::Int, after::Int)
     
     return true
 end
+
+"""
+Make the head pointer do a self-loop.
+"""
+@inline empty!(s::SortedSet) = s[s.N] = s.N
 
 @inline push!(s::SortedSet, index::Int) = push!(s, index, s.N)

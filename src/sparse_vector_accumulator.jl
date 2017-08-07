@@ -1,7 +1,7 @@
 import Base: setindex!, convert, empty!
 
 """
-SparseVectorAccumulator accumulates the sparse vector
+`SparseVectorAccumulator` accumulates the sparse vector
 resulting from SpMV. Initialization requires O(N) work,
 therefore the data structure is reused. Insertion is O(1).
 Note that `nzind` is unordered. Also note that there is
