@@ -24,7 +24,7 @@ import ILU: InsertableSparseVector, add!, axpy!, append_col!
 
     @testset "Append column to SparseMatrixCSC" begin
         A = spzeros(5, 5)
-        v = SparseVectorAccumulator{Float64}(5)
+        v = InsertableSparseVector{Float64}(5)
 
         add!(v, 0.3, 1)
         add!(v, 0.009, 3)
