@@ -67,9 +67,10 @@ Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit 
 
 ```julia
 > using ILU
+> using BenchmarkTools
 > A = sprand(1000, 1000, 5 / 1000) + 10I
-> @time fact = crout_ilu(A, τ = 0.001)
-  0.005182 seconds (100 allocations: 1.167 MiB)
+> fact = @btime crout_ilu($A, τ = 0.001)
+  3.853 ms (96 allocations: 1.18 MiB)
 > vecnorm((fact.L + I) * fact.U.' - A)
 0.05610746209883846
 > nnz(fact) / nnz(A)
@@ -79,8 +80,8 @@ Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit 
 Full LU is obtained when the drop tolerance is `0.0`.
 
 ```julia
->  @time fact = crout_ilu(A, τ = 0.)
-  0.400229 seconds (116 allocations: 12.167 MiB, 0.41% gc time)
+> fact = @btime crout_ilu($A, τ = 0.)
+  629.361 ms (112 allocations: 12.18 MiB)
 > vecnorm((fact.L + I) * fact.U.' - A)
 1.532520861565543e-13
 > nnz(fact) / nnz(A)
