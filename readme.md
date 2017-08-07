@@ -72,7 +72,7 @@ Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit 
   0.005182 seconds (100 allocations: 1.167 MiB)
 > vecnorm((fact.L + I) * fact.U.' - A)
 0.05610746209883846
-> (nnz(fact.L) + nnz(fact.U)) / nnz(A)
+> nnz(fact) / nnz(A)
 3.670773780187284
 ```
 
@@ -83,7 +83,7 @@ Full LU is obtained when the drop tolerance is `0.0`.
   0.400229 seconds (116 allocations: 12.167 MiB, 0.41% gc time)
 > vecnorm((fact.L + I) * fact.U.' - A)
 1.532520861565543e-13
-> (nnz(fact.L) + nnz(fact.U)) / nnz(A)
+> nnz(fact) / nnz(A)
 61.66009528503368
 ```
 
@@ -111,7 +111,7 @@ function mytest(n = 64)
     b = A * x
 
     LU = crout_ilu(A, τ = 0.1)
-    @show (nnz(LU.L) + nnz(LU.U)) / nnz(A)
+    @show nnz(LU) / nnz(A)
 
     # Bench
     prec = @benchmark crout_ilu($A, τ = 0.1)
@@ -138,7 +138,7 @@ mytest()
 Outputs
 
 ```julia
-(nnz(LU.L) + nnz(LU.U)) / nnz(A) = 2.1180353639352374
+nnz(LU) / nnz(A) = 2.1180353639352374
 prec = Trial(611.019 ms)
 with = Trial(692.187 ms)
 without = Trial(2.051 s)

@@ -1,4 +1,13 @@
-import Base: A_ldiv_B!, (\)
+import Base: A_ldiv_B!, (\), nnz
+
+"""
+Returns the number of nonzeros of the `L` and `U`
+factor combined.
+
+Excludes the unit diagonal of the `L` factor,
+which is not stored.
+"""
+nnz(F::ILUFactorization) = nnz(F.L) + nnz(F.U)
 
 function A_ldiv_B!(F::ILUFactorization, y::AbstractVector)
     forward_substitution_without_diag!(F.L, y)

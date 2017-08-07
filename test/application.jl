@@ -56,3 +56,10 @@ end
 
     test_A_ldiv_B!(tril(sprand(10, 10, .5), -1), tril(sprand(10, 10, .5) + 10I))
 end
+
+@testset "nnz" begin
+    L = tril(sprand(10, 10, .5), -1)
+    U = tril(sprand(10, 10, .5)) + 10I
+    LU = ILUFactorization(L, U)
+    @test nnz(LU) == nnz(L) + nnz(U)
+end
