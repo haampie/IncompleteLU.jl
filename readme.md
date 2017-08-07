@@ -86,3 +86,48 @@ Full LU is obtained when the drop tolerance is `0.0`.
 > (nnz(fact.L) + nnz(fact.U)) / nnz(A)
 61.66009528503368
 ```
+
+## Preconditioner
+ILU is typically used as preconditioner for iterative methods. For instance
+
+```julia
+using IterativeSolvers
+using BenchmarkTools
+using Plots
+using ILU
+
+A = spdiagm((fill(-1.0, 9), fill(2.0, 10), fill(-1.2, 9)), (-1, 0, 1))
+Id = speye(10)
+A = kron(A, Id) + kron(Id, A)
+A = kron(A, Id) + kron(Id, A)
+
+LU = crout_ilu(A, τ = 0.1)
+
+x = rand(1000)
+b = A * x
+
+# Bench
+with = @benchmark gmres($A, $b, Pl = $LU, restart = 20, maxiter = 1000)
+without = @benchmark gmres($A, $b, restart = 20, maxiter = 1000)
+
+# Result
+x_with, hist_with = gmres(A, b, Pl = LU, restart = 20, maxiter = 1000, log = true)
+x_without, hist_without = gmres(A, b, restart = 20, maxiter = 1000, log = true)
+
+@show norm(b - A * x_with) with
+@show norm(b - A * x_without) without
+
+plot(hist_with[:resnorm], yscale = :log10, label = "With ILU preconditioning", xlabel = "Iteration", ylabel = "Residual norm (preconditioned)")
+plot!(hist_without[:resnorm], label = "Without preconditioning")
+```
+
+Outputs
+
+```julia
+norm(b - A * x_with) = 5.187081459171261e-7
+with = Trial(2.168 ms)
+norm(b - A * x_without) = 1.0806003685676213e-6
+without = Trial(16.415 ms)
+```
+
+![Residual norm with preconditioner](residual.svg)
