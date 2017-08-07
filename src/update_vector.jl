@@ -20,8 +20,8 @@ mutable struct SparseVectorAccumulator{T}
 
     SparseVectorAccumulator{T}(N::Int) where {T} = new(
         zeros(Int, N),
-        zeros(Int, N),
-        zeros(T, N),
+        Int[],
+        T[],
         0,
         N
     )
@@ -56,8 +56,13 @@ function add!(v::SparseVectorAccumulator{Tv}, a::Tv, idx::Int) where {Tv}
     if v.full[idx] == 0
         v.n += 1
         v.full[idx] = v.n
-        v.nzval[v.n] = a
-        v.nzind[v.n] = idx
+        if length(v.nzval) < v.n
+            push!(v.nzval, a)
+            push!(v.nzind, idx)
+        else
+            v.nzval[v.n] = a
+            v.nzind[v.n] = idx
+        end
     else # Update
         v.nzval[v.full[idx]] += a
     end
