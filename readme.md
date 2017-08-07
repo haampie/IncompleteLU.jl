@@ -96,38 +96,54 @@ using BenchmarkTools
 using Plots
 using ILU
 
-A = spdiagm((fill(-1.0, 9), fill(2.0, 10), fill(-1.2, 9)), (-1, 0, 1))
-Id = speye(10)
-A = kron(A, Id) + kron(Id, A)
-A = kron(A, Id) + kron(Id, A)
+"""
+Benchmarks a non-symmetric 64 × 64 × 64 problem
+with and without the ILU preconditioner.
+"""
+function mytest(n = 64)
+    N = n^3
 
-LU = crout_ilu(A, τ = 0.1)
+    A = spdiagm((fill(-1.0, n - 1), fill(3.0, n), fill(-2.0, n - 1)), (-1, 0, 1))
+    Id = speye(n)
+    A = kron(A, Id) + kron(Id, A)
+    A = kron(A, Id) + kron(Id, A)
+    x = ones(N)
+    b = A * x
 
-x = rand(1000)
-b = A * x
+    LU = crout_ilu(A, τ = 0.1)
+    @show (nnz(LU.L) + nnz(LU.U)) / nnz(A)
 
-# Bench
-with = @benchmark gmres($A, $b, Pl = $LU, restart = 20, maxiter = 1000)
-without = @benchmark gmres($A, $b, restart = 20, maxiter = 1000)
+    # Bench
+    prec = @benchmark crout_ilu($A, τ = 0.1)
+    @show prec
+    with = @benchmark bicgstabl($A, $b, 2, Pl = $LU, max_mv_products = 2000)
+    @show with
+    without = @benchmark bicgstabl($A, $b, 2, max_mv_products = 2000)
+    @show without
 
-# Result
-x_with, hist_with = gmres(A, b, Pl = LU, restart = 20, maxiter = 1000, log = true)
-x_without, hist_without = gmres(A, b, restart = 20, maxiter = 1000, log = true)
+    # Result
+    x_with, hist_with = bicgstabl(A, b, 2, Pl = LU, max_mv_products = 2000, log = true)
+    x_without, hist_without = bicgstabl(A, b, 2, max_mv_products = 2000, log = true)
 
-@show norm(b - A * x_with) with
-@show norm(b - A * x_without) without
+    @show norm(b - A * x_with) / norm(b) 
+    @show norm(b - A * x_without) / norm(b)
 
-plot(hist_with[:resnorm], yscale = :log10, label = "With ILU preconditioning", xlabel = "Iteration", ylabel = "Residual norm (preconditioned)")
-plot!(hist_without[:resnorm], label = "Without preconditioning")
+    plot(hist_with[:resnorm], yscale = :log10, label = "With ILU preconditioning", xlabel = "Iteration", ylabel = "Residual norm (preconditioned)")
+    plot!(hist_without[:resnorm], label = "Without preconditioning")
+end
+
+mytest()
 ```
 
 Outputs
 
 ```julia
-norm(b - A * x_with) = 5.187081459171261e-7
-with = Trial(2.168 ms)
-norm(b - A * x_without) = 1.0806003685676213e-6
-without = Trial(16.415 ms)
+(nnz(LU.L) + nnz(LU.U)) / nnz(A) = 2.1180353639352374
+prec = Trial(611.019 ms)
+with = Trial(692.187 ms)
+without = Trial(2.051 s)
+norm(b - A * x_with) / norm(b) = 2.133397068536056e-9
+norm(b - A * x_without) / norm(b) = 1.6967043606691152e-9
 ```
 
-![Residual norm with preconditioner](https://haampie.github.io/ILU.jl/residual.png)
+![Residual norm with preconditioner](https://haampie.github.io/ILU.jl/residual2.png)
