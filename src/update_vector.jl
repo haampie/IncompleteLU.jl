@@ -85,7 +85,7 @@ function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::
         if abs(value) ≥ drop || row == j
             # Filter and drop.
             push!(A.rowval, row)
-            push!(A.nzval, value)
+            push!(A.nzval, scale * value)
             total += 1
         end
 

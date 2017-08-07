@@ -1,5 +1,6 @@
 using ILU
-import ILU: SparseVectorAccumulator, add!, axpy!
+using Base.Test
+import ILU: SparseVectorAccumulator, add!, axpy!, append_col!
 
 @testset "SparseVectorAccumulator" begin
     let
