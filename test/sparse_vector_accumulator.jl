@@ -3,7 +3,7 @@ using Base.Test
 import ILU: SparseVectorAccumulator, add!, axpy!, append_col!, isoccupied
 
 @testset "SparseVectorAccumulator" begin
-    let
+    @testset "Initialization" begin
         v = SparseVectorAccumulator{Float64}(10)
         @test iszero(v.nnz)
         @test iszero(v.occupied)
