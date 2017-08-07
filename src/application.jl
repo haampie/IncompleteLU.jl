@@ -1,8 +1,15 @@
-import Base: A_ldiv_B!
+import Base: A_ldiv_B!, (\)
 
 function A_ldiv_B!(F::ILUFactorization, y::AbstractVector)
-    transposed_backward_substitution!(F.U, y)
     forward_substitution_without_diag!(F.L, y)
+    transposed_backward_substitution!(F.U, y)
+end
+
+(\)(F::ILUFactorization, y::AbstractVector) = A_ldiv_B!(F, copy(y))
+
+function A_ldiv_B!(y::AbstractVector, F::ILUFactorization, x::AbstractVector)
+    copy!(y, x)
+    A_ldiv_B!(F, y)
 end
 
 """

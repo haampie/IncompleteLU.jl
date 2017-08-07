@@ -39,13 +39,19 @@ end
         LU = ILUFactorization(L, U)
         x = rand(size(LU.L, 1))
         y = copy(x)
+        z = copy(x)
+        w = copy(x)
 
         A_ldiv_B!(LU, x)
-
-        A_ldiv_B!(UpperTriangular(LU.U.'), y)
         A_ldiv_B!(LowerTriangular(LU.L + I), y)
+        A_ldiv_B!(UpperTriangular(LU.U.'), y)
 
         @test x ≈ y
+        @test LU \ z == x
+
+        A_ldiv_B!(w, LU, z)
+
+        @test w == x
     end
 
     test_A_ldiv_B!(tril(sprand(10, 10, .5), -1), tril(sprand(10, 10, .5) + 10I))
