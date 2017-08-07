@@ -1,11 +1,11 @@
 using ILU
 using Base.Test
-import ILU: SparseVectorAccumulator, add!, axpy!, append_col!
+import ILU: SparseVectorAccumulator, add!, axpy!, append_col!, isoccupied
 
 @testset "SparseVectorAccumulator" begin
     let
         v = SparseVectorAccumulator{Float64}(10)
-        @test iszero(v.n)
+        @test iszero(v.nnz)
         @test iszero(v.occupied)
     end
 
@@ -14,14 +14,11 @@ import ILU: SparseVectorAccumulator, add!, axpy!, append_col!
         add!(v, 1.0, 3)
         add!(v, 1.0, 3)
         add!(v, 3.0, 2)
-        @test v.n == 2
-        @test v.occupied[3] == 1
-        @test v.occupied[2] == 1
-        @test v.nzind[1] == 3
-        @test v.nzind[2] == 2
-        @test v.nzval[3] == 2.0
-        @test v.nzval[2] == 3.0
-        @test convert(Vector, v) == [0; 3.0; 2.0]
+        @test v.nnz == 2
+        @test isoccupied(v, 1) == false
+        @test isoccupied(v, 2)
+        @test isoccupied(v, 3)
+        @test convert(Vector, v) == [0.; 3.0; 2.0]
     end
 
     @testset "Add column of SparseMatrixCSC" begin

@@ -1,14 +1,22 @@
-import Base: setindex!, convert
+import Base: setindex!, convert, empty!
 
 """
-SparseVectorAccumulator is a container that makes combining
-columns of a SparseMatrixCSC cheap. It extends SparseVector
-with two full vectors and also does not keep `nzind` sorted.
-This allows O(1) insertions.
+SparseVectorAccumulator accumulates the sparse vector
+resulting from SpMV. Initialization requires O(N) work,
+therefore the data structure is reused. Insertion is O(1).
+Note that `nzind` is unordered. Also note that there is
+wasted space: `nzind` could be a growing list. Pre-allocation
+seems faster though.
+
+SparseVectorAccumulator incorporates the multiple switch technique
+by Gustavson (1976), which makes resetting an O(1) operation rather
+than O(nnz): the `curr` value is used to flag the occupied indices,
+and `curr` is increased at each reset.
+
 occupied = [0, 1, 0, 1, 0, 0, 0]
 nzind = [2, 4, 0, 0, 0, 0]
 nzval = [0., .1234, 0., .435, 0., 0., 0.]
-n = 2
+nnz = 2
 length = 7
 curr = 1
 """
@@ -16,7 +24,7 @@ mutable struct SparseVectorAccumulator{T}
     occupied::Vector{Int}
     nzind::Vector{Int}
     nzval::Vector{T}
-    n::Int
+    nnz::Int
     length::Int
     curr::Int
 
@@ -32,7 +40,7 @@ end
 
 function convert(::Type{Vector}, v::SparseVectorAccumulator{T}) where {T}
     x = zeros(T, v.length)
-    x[v.nzind[1 : v.n]] = v.nzval[v.nzind[1 : v.n]]
+    x[v.nzind[1 : v.nnz]] = v.nzval[v.nzind[1 : v.nnz]]
     x
 end
 
@@ -50,34 +58,50 @@ function axpy!(a::Tv, A::SparseMatrixCSC{Tv}, column::Int, start::Int, y::Sparse
 end
 
 """
-Does v[idx] += a.
+Sets `v[idx] += a` when `idx` is occupied, or sets `v[idx] = a`.
+Complexity is O(1).
 """
 function add!(v::SparseVectorAccumulator{Tv}, a::Tv, idx::Int) where {Tv}
-    # Fill-in
-    if v.occupied[idx] != v.curr
-        v.n += 1
+    if isoccupied(v, idx)
+        v.nzval[idx] += a
+    else
+        v.nnz += 1
         v.occupied[idx] = v.curr
         v.nzval[idx] = a
-        v.nzind[v.n] = idx
-    else # Update
-        v.nzval[idx] += a
+        v.nzind[v.nnz] = idx
     end
 
     nothing
 end
 
 """
-Basically `A[:, j] = y`.
-Note: sorts the `nzind`'s of `y`, so that the column
-can be added from top to bottom.
+Check whether `idx` is nonzero.
+"""
+@inline isoccupied(v::SparseVectorAccumulator, idx::Int) = v.occupied[idx] == v.curr
+
+"""
+Empty the SparseVectorAccumulator in O(1) operations.
+"""
+@inline function empty!(v::SparseVectorAccumulator)
+    v.curr += 1
+    v.nnz = 0
+end
+
+"""
+Basically `A[:, j] = scale * drop(y)`, where drop removes
+values less than `drop`. Note: sorts the `nzind`'s of `y`, 
+so that the column can be appended to a SparseMatrixCSC.
+
+Resets the `SparseVectorAccumulator`.
+
 Note: does *not* update `A.colptr` for columns > j + 1,
-as that is done automatically.
+as that is done during the steps.
 """
 function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::Int, drop::Tv, scale::Tv = one(Tv)) where {Tv}
     # Move the indices of interest up front
     total = 0
 
-    for idx = 1 : y.n
+    for idx = 1 : y.nnz
         row = y.nzind[idx]
         value = y.nzval[row]
 
@@ -87,6 +111,7 @@ function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::
         end
     end
 
+    # Sort the retained values.
     sort!(y.nzind, 1, total, Base.Sort.QuickSortAlg(), Base.Order.Forward)
     
     for idx = 1 : total
@@ -96,8 +121,8 @@ function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::
     end
 
     A.colptr[j + 1] = A.colptr[j] + total
-    y.curr += 1
-    y.n = 0
+    
+    empty!(y)
 
     nothing
 end
