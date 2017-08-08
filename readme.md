@@ -147,4 +147,4 @@ norm(b - A * x_with) / norm(b) = 2.133397068536056e-9
 norm(b - A * x_without) / norm(b) = 1.6967043606691152e-9
 ```
 
-![Residual norm with preconditioner](https://haampie.github.io/ILU.jl/residual2.png)
+![Residual norm with preconditioner](https://haampie.github.io/ILU.jl/residual3.png)
