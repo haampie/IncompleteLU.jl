@@ -1,5 +1,10 @@
+@static if VERSION < v"0.7.0"
+    using Base.Test
+else
+    using Test
+end
+
 import ILU: SortedSet, push!
-using Base.Test
 
 @testset "Sorted indices" begin
     @testset "New values" begin

@@ -1,12 +1,17 @@
+@static if VERSION < v"0.7.0"
+    using Base.Test
+else
+    using Test
+end
+
 using ILU
-using Base.Test
 
 @testset "Crout ILU" begin
     let
         # Test if it performs full LU if droptol is zero
         A = sprand(10, 10, .5) + 10I
         ilu = ILU.crout_ilu(A, τ = 0.0)
-        lu = lufact(full(A), Val{false})
+        lu = lufact(full(A), @static VERSION < v"0.7.0" ? Val{false} : Val(false))
 
         @test full(ilu.L + I) ≈ lu[:L]
         @test full(ilu.U.') ≈ lu[:U]

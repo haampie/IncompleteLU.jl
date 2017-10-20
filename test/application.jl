@@ -1,4 +1,9 @@
-using Base.Test
+@static if VERSION < v"0.7.0"
+    using Base.Test
+else
+    using Test
+end
+
 using ILU
 import ILU: forward_substitution_without_diag!, transposed_backward_substitution!
 
