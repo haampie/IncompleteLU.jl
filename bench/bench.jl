@@ -1,6 +1,6 @@
 module Bench
 
-using ILU
+using IncompleteLU
 using BenchmarkTools
 using SparseArrays
 using LinearAlgebra: axpy!, I
@@ -10,9 +10,9 @@ using Profile
 function go()
     seed!(1)
     A = sprand(10_000, 10_000, 10 / 10_000) + 15I
-    LU = crout_ilu(A)
+    LU = ilu(A)
     Profile.clear_malloc_data()
-    @profile crout_ilu(A)
+    @profile ilu(A)
 end
 
 function axpy_perf()
@@ -82,13 +82,13 @@ end
 function bench_ILU()
     seed!(1)
     A = sprand(10_000, 10_000, 10 / 10_000) + 15I
-    LU = crout_ilu(A, τ = 0.1)
+    LU = ilu(A, τ = 0.1)
     
     @show nnz(LU.L) nnz(LU.U)
     # nnz(LU.L) = 44836
     # nnz(LU.U) = 54827
 
-    result = @benchmark crout_ilu($A, τ = 0.1)
+    result = @benchmark ilu($A, τ = 0.1)
     # BenchmarkTools.Trial:
     #   memory estimate:  16.24 MiB
     #   allocs estimate:  545238

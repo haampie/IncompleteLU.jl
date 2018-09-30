@@ -1,5 +1,5 @@
 using Test
-using ILU: ILUFactorization, forward_substitution_without_diag!, transposed_backward_substitution!
+using IncompleteLU: ILUFactorization, forward_substitution_without_diag!, transposed_backward_substitution!
 using LinearAlgebra
 
 @testset "Backward substitution" begin

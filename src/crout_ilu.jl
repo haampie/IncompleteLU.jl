@@ -1,6 +1,6 @@
-export crout_ilu
+export ilu
 
-function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
+function ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
     n = size(A, 1)
 
     L = spzeros(T, n, n)

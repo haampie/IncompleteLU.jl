@@ -1,4 +1,4 @@
-module ILU
+module IncompleteLU
 
 using SparseArrays
 

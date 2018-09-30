@@ -1,18 +1,18 @@
 module BenchInsertion
 
-using ILU
+using IncompleteLU
 using BenchmarkTools
 
 function do_stuff(A)
     n = size(A, 1)
-    U_row = ILU.InsertableSparseVector{Float64}(n);
-    A_reader = ILU.RowReader(A)
+    U_row = IncompleteLU.InsertableSparseVector{Float64}(n);
+    A_reader = IncompleteLU.RowReader(A)
 
     for k = 1 : n
         col = first_in_row(A_reader, k)
 
         while is_column(col)
-            ILU.add!(U_row, nzval(A_reader, col), col, n + 1)
+            IncompleteLU.add!(U_row, nzval(A_reader, col), col, n + 1)
             next_col = next_column(A_reader, col)
             next_row!(A_reader, col)
 

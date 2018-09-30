@@ -1,9 +1,9 @@
-[![Build Status](https://travis-ci.org/haampie/ILU.jl.svg?branch=master)](https://travis-ci.org/haampie/ILU.jl) [![codecov](https://codecov.io/gh/haampie/ILU.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/haampie/ILU.jl)
+[![Build Status](https://travis-ci.org/haampie/IncompleteLU.jl.svg?branch=master)](https://travis-ci.org/haampie/IncompleteLU.jl) [![codecov](https://codecov.io/gh/haampie/IncompleteLU.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/haampie/IncompleteLU.jl)
 
 # ILU for SparseMatrixCSC
 
 This package implements the left-looking or Crout version of ILU for 
-the `SparseMatrixCSC` type. It only exports the function `crout_ilu`.
+the `SparseMatrixCSC` type. It only exports the function `ilu`.
 
 ## When to use this package
 
@@ -78,10 +78,10 @@ The advantage of `SparseVectorAccumulator` over `InsertableSparseVector` is that
 Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit of fill-in.
 
 ```julia
-> using ILU, LinearAlgebra, SparseArrays
+> using IncompleteLU, LinearAlgebra, SparseArrays
 > using BenchmarkTools
 > A = sprand(1000, 1000, 5 / 1000) + 10I
-> fact = @btime crout_ilu($A, τ = 0.001)
+> fact = @btime ilu($A, τ = 0.001)
   2.894 ms (90 allocations: 1.18 MiB)
 > norm((fact.L + I) * fact.U' - A)
 0.05736313452207798
@@ -92,7 +92,7 @@ Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit 
 Full LU is obtained when the drop tolerance is `0.0`.
 
 ```julia
-> fact = @btime crout_ilu($A, τ = 0.)
+> fact = @btime ilu($A, τ = 0.)
   209.293 ms (106 allocations: 12.18 MiB)
 > norm((fact.L + I) * fact.U' - A)
 1.5262736852530086e-13
@@ -104,7 +104,7 @@ Full LU is obtained when the drop tolerance is `0.0`.
 ILU is typically used as preconditioner for iterative methods. For instance
 
 ```julia
-using IterativeSolvers, ILU
+using IterativeSolvers, IncompleteLU
 using SparseArrays, LinearAlgebra
 using BenchmarkTools
 using Plots
@@ -127,11 +127,11 @@ function mytest(n = 64)
     x = ones(N)
     b = A * x
 
-    LU = crout_ilu(A, τ = 0.1)
+    LU = ilu(A, τ = 0.1)
     @show nnz(LU) / nnz(A)
 
     # Bench
-    #prec = @benchmark crout_ilu($A, τ = 0.1)
+    #prec = @benchmark ilu($A, τ = 0.1)
     #@show prec
     #with = @benchmark bicgstabl($A, $b, 2, Pl = $LU, max_mv_products = 2000)
     #@show with
@@ -163,7 +163,7 @@ norm(b - A * x_with) / norm(b) = 2.619046427010899e-9
 norm(b - A * x_without) / norm(b) = 1.2501603557459283e-8
 ```
 
-![Residual norm with preconditioner](https://haampie.github.io/ILU.jl/residual3.png)
+![Residual norm with preconditioner](https://haampie.github.io/IncompleteLU.jl/residual3.png)
 
 ## Todo
 The method does not implement scaling techniques, so the `τ` parameter is really an

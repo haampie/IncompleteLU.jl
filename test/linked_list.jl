@@ -1,6 +1,6 @@
 using Test
-using ILU: LinkedLists, RowReader, first_in_row, is_column, nzval, next_column, next_row!,
-           has_next_nonzero, enqueue_next_nonzero!
+using IncompleteLU: LinkedLists, RowReader, first_in_row, is_column, nzval, next_column, 
+                    next_row!, has_next_nonzero, enqueue_next_nonzero!
 using SparseArrays
 
 @testset "Linked List" begin

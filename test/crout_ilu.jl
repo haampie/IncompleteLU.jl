@@ -1,5 +1,5 @@
 using Test
-using ILU
+using IncompleteLU
 using SparseArrays
 using LinearAlgebra
 
@@ -7,7 +7,7 @@ using LinearAlgebra
     let
         # Test if it performs full LU if droptol is zero
         A = sprand(10, 10, .5) + 10I
-        ilu = ILU.crout_ilu(A, τ = 0.0)
+        ilu = IncompleteLU.ilu(A, τ = 0.0)
         flu = lu(Matrix(A), Val(false))
 
         @test Matrix(ilu.L + I) ≈ flu.L
@@ -17,7 +17,7 @@ using LinearAlgebra
     let
         # Test if L = I and U = diag(A) when the droptol is large.
         A = sprand(10, 10, .5) + 10I
-        ilu = ILU.crout_ilu(A, τ = 1.0)
+        ilu = IncompleteLU.ilu(A, τ = 1.0)
 
         @test nnz(ilu.L) == 0
         @test nnz(ilu.U) == 10
