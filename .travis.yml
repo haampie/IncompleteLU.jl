@@ -7,4 +7,4 @@ notifications:
   email: false
 after_success:
 - julia -e 'using Pkg; Pkg.add(["Coverage"])'
-- julia -e 'using Pkg, Coverage, ILU; cd(joinpath(dirname(pathof(ILU)), "..")); Codecov.submit(process_folder())'
+- julia -e 'using Pkg, Coverage, IncompleteLU; cd(joinpath(dirname(pathof(IncompleteLU)), "..")); Codecov.submit(process_folder())'

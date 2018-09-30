@@ -1,6 +1,6 @@
 using Test
 
-using ILU: InsertableSparseVector, add!, axpy!, append_col!, indices
+using IncompleteLU: InsertableSparseVector, add!, axpy!, append_col!, indices
 
 @testset "InsertableSparseVector" begin
     @testset "Insertion sorted sparse vector" begin

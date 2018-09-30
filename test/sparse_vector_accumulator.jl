@@ -1,4 +1,4 @@
-using ILU: SparseVectorAccumulator, add!, append_col!, isoccupied
+using IncompleteLU: SparseVectorAccumulator, add!, append_col!, isoccupied
 using LinearAlgebra
 
 @testset "SparseVectorAccumulator" begin

@@ -1,4 +1,4 @@
-name = "ILU"
+name = "IncompleteLU"
 uuid = "026e27e3-decc-44e5-8025-ca6ab3bc6c72"
 author = ["Harmen Stoppels <me@harmenstoppels.nl>"]
 version = "0.1.0"

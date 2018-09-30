@@ -1,6 +1,6 @@
 using Test
 
-import ILU: SortedSet, push!
+import IncompleteLU: SortedSet, push!
 
 @testset "Sorted indices" begin
     @testset "New values" begin
