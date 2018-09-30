@@ -1,8 +1,4 @@
-@static if VERSION < v"0.7.0"
-    using Base.Test
-else
-    using Test
-end
+using Test
 
 import ILU: SortedSet, push!
 
@@ -15,7 +11,7 @@ import ILU: SortedSet, push!
         @test push!(indices, 6)
         @test push!(indices, 8)
 
-        as_vec = convert(Vector, indices)
+        as_vec = Vector(indices)
         @test as_vec == [4, 5, 6, 7, 8]
     end
 
@@ -25,7 +21,7 @@ import ILU: SortedSet, push!
         @test push!(indices, 3) == false
         @test push!(indices, 8)
         @test push!(indices, 8) == false
-        @test convert(Vector, indices) == [3, 8]
+        @test Vector(indices) == [3, 8]
     end
 
     @testset "Quick insertion with known previous index" begin
@@ -33,13 +29,13 @@ import ILU: SortedSet, push!
         @test push!(indices, 3)
         @test push!(indices, 4, 3)
         @test push!(indices, 8, 4)
-        @test convert(Vector, indices) == [3, 4, 8]
+        @test Vector(indices) == [3, 4, 8]
     end
 
     @testset "Pretty printing" begin
         indices = SortedSet(10)
         push!(indices, 3)
         push!(indices, 2)
-        @test contains(sprint(show, indices), "with values")
+        @test occursin("with values", sprint(show, indices))
     end
 end

@@ -1,6 +1,6 @@
 module ILU
 
-export ILUFactorization
+using SparseArrays
 
 struct ILUFactorization{T}
     L::SparseMatrixCSC{T}

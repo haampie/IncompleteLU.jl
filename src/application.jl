@@ -1,4 +1,7 @@
-import Base: A_ldiv_B!, (\), nnz
+import SparseArrays: nnz
+import LinearAlgebra: ldiv!
+import Base.\
+
 
 """
 Returns the number of nonzeros of the `L` and `U`
@@ -9,16 +12,16 @@ which is not stored.
 """
 nnz(F::ILUFactorization) = nnz(F.L) + nnz(F.U)
 
-function A_ldiv_B!(F::ILUFactorization, y::AbstractVector)
+function ldiv!(F::ILUFactorization, y::AbstractVector)
     forward_substitution_without_diag!(F.L, y)
     transposed_backward_substitution!(F.U, y)
 end
 
-(\)(F::ILUFactorization, y::AbstractVector) = A_ldiv_B!(F, copy(y))
+(\)(F::ILUFactorization, y::AbstractVector) = ldiv!(F, copy(y))
 
-function A_ldiv_B!(y::AbstractVector, F::ILUFactorization, x::AbstractVector)
-    copy!(y, x)
-    A_ldiv_B!(F, y)
+function ldiv!(y::AbstractVector, F::ILUFactorization, x::AbstractVector)
+    copyto!(y, x)
+    ldiv!(F, y)
 end
 
 """

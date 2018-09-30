@@ -1,6 +1,3 @@
-import Base.Order.Ordering
-import Base.Order.lt
-
 export crout_ilu
 
 function crout_ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}

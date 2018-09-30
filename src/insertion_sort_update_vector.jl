@@ -1,4 +1,5 @@
-import Base: getindex, setindex!, indices, convert, empty!
+import Base: getindex, setindex!, empty!, Vector
+import LinearAlgebra: axpy!
 
 """
 `InsertableSparseVector` accumulates the sparse vector
@@ -10,14 +11,14 @@ struct InsertableSparseVector{Tv}
     values::Vector{Tv}
     indices::SortedSet
 
-    InsertableSparseVector{Tv}(n::Int) where {Tv} = new(Vector{Tv}(n), SortedSet(n))
+    InsertableSparseVector{Tv}(n::Int) where {Tv} = new(Vector{Tv}(undef, n), SortedSet(n))
 end
 
 @inline getindex(v::InsertableSparseVector{Tv}, idx::Int) where {Tv} = v.values[idx]
 @inline setindex!(v::InsertableSparseVector{Tv}, value::Tv, idx::Int) where {Tv} = v.values[idx] = value
-@inline indices(v::InsertableSparseVector) = convert(Vector, v.indices)
+@inline indices(v::InsertableSparseVector) = Vector(v.indices)
 
-function convert(::Type{Vector}, v::InsertableSparseVector{Tv}) where {Tv}
+function Vector(v::InsertableSparseVector{Tv}) where {Tv}
     vals = zeros(Tv, v.indices.N - 1)
     for index in v.indices
         vals[index] = v.values[index]

@@ -2,9 +2,13 @@ module Bench
 
 using ILU
 using BenchmarkTools
+using SparseArrays
+using LinearAlgebra: axpy!, I
+using Random: seed!
+using Profile
 
 function go()
-    srand(1)
+    seed!(1)
     A = sprand(10_000, 10_000, 10 / 10_000) + 15I
     LU = crout_ilu(A)
     Profile.clear_malloc_data()
@@ -13,17 +17,17 @@ end
 
 function axpy_perf()
     A = sprand(1_000, 1_000, 10 / 1_000) + 15I
-    y = ILU.SparseVectorAccumulator{Float64}(1_000)
+    y = SparseVectorAccumulator{Float64}(1_000)
 
-    ILU.axpy!(1.0, A, 1, A.colptr[1], y)
-    ILU.axpy!(1.0, A, 2, A.colptr[2], y)
-    ILU.axpy!(1.0, A, 3, A.colptr[3], y)
+    axpy!(1.0, A, 1, A.colptr[1], y)
+    axpy!(1.0, A, 2, A.colptr[2], y)
+    axpy!(1.0, A, 3, A.colptr[3], y)
 
     Profile.clear_malloc_data()
 
-    ILU.axpy!(1.0, A, 1, A.colptr[1], y)
-    ILU.axpy!(1.0, A, 2, A.colptr[2], y)
-    ILU.axpy!(1.0, A, 3, A.colptr[3], y)
+    axpy!(1.0, A, 1, A.colptr[1], y)
+    axpy!(1.0, A, 2, A.colptr[2], y)
+    axpy!(1.0, A, 3, A.colptr[3], y)
 end
 
 function sum_values_row_wise(A::SparseMatrixCSC)
@@ -76,15 +80,15 @@ function bench_perf()
 end
 
 function bench_ILU()
-    srand(1)
+    seed!(1)
     A = sprand(10_000, 10_000, 10 / 10_000) + 15I
-    LU = ILU.crout_ilu(A, τ = 0.1)
+    LU = crout_ilu(A, τ = 0.1)
     
     @show nnz(LU.L) nnz(LU.U)
     # nnz(LU.L) = 44836
     # nnz(LU.U) = 54827
 
-    result = @benchmark ILU.crout_ilu($A, τ = 0.1)
+    result = @benchmark crout_ilu($A, τ = 0.1)
     # BenchmarkTools.Trial:
     #   memory estimate:  16.24 MiB
     #   allocs estimate:  545238
@@ -152,4 +156,4 @@ end
 
 end
 
-Bench.go()
+# Bench.go()

@@ -1,20 +1,17 @@
-@static if VERSION < v"0.7.0"
-    using Base.Test
-else
-    using Test
-end
-
+using Test
 using ILU
+using SparseArrays
+using LinearAlgebra
 
 @testset "Crout ILU" begin
     let
         # Test if it performs full LU if droptol is zero
         A = sprand(10, 10, .5) + 10I
         ilu = ILU.crout_ilu(A, τ = 0.0)
-        lu = lufact(full(A), @static VERSION < v"0.7.0" ? Val{false} : Val(false))
+        flu = lu(Matrix(A), Val(false))
 
-        @test full(ilu.L + I) ≈ lu[:L]
-        @test full(ilu.U.') ≈ lu[:U]
+        @test Matrix(ilu.L + I) ≈ flu.L
+        @test Matrix(transpose(ilu.U)) ≈ flu.U
     end
 
     let

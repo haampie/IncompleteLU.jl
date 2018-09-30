@@ -1,4 +1,5 @@
-import Base: setindex!, convert, empty!
+import Base: setindex!, empty!, Vector
+import LinearAlgebra: axpy!
 
 """
 `SparseVectorAccumulator` accumulates the sparse vector
@@ -30,15 +31,15 @@ mutable struct SparseVectorAccumulator{T}
 
     SparseVectorAccumulator{T}(N::Int) where {T} = new(
         zeros(Int, N),
-        Vector{Int}(N),
-        Vector{T}(N),
+        Vector{Int}(undef, N),
+        Vector{T}(undef, N),
         0,
         N,
         1
     )
 end
 
-function convert(::Type{Vector}, v::SparseVectorAccumulator{T}) where {T}
+function Vector(v::SparseVectorAccumulator{T}) where {T}
     x = zeros(T, v.length)
     x[v.nzind[1 : v.nnz]] = v.nzval[v.nzind[1 : v.nnz]]
     x

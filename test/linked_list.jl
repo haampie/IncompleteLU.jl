@@ -1,10 +1,7 @@
-@static if VERSION < v"0.7.0"
-    using Base.Test
-else
-    using Test
-end
-
-using ILU
+using Test
+using ILU: LinkedLists, RowReader, first_in_row, is_column, nzval, next_column, next_row!,
+           has_next_nonzero, enqueue_next_nonzero!
+using SparseArrays
 
 @testset "Linked List" begin
     n = 5
