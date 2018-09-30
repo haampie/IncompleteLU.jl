@@ -2,7 +2,19 @@
 
 # ILU for SparseMatrixCSC
 
-This package implements the left-looking or Crout version of ILU for the `SparseMatrixCSC` type. The basic algorithm loops roughly as follows:
+This package implements the left-looking or Crout version of ILU for 
+the `SparseMatrixCSC` type. It only exports the function `crout_ilu`.
+
+## When to use this package
+
+Whenever you need an incomplete factorization of a sparse and _non-symmetric_ matrix.
+
+The package also provides means to apply the factorization in-place via `ldiv!`. This is 
+useful in the context of preconditioning. See the example below.
+
+## The algorithm
+
+The basic algorithm loops roughly as follows:
 
 ```
 for k = 1 : n
@@ -66,36 +78,36 @@ The advantage of `SparseVectorAccumulator` over `InsertableSparseVector` is that
 Using a drop tolerance of `0.01`, we get a reasonable preconditioner with a bit of fill-in.
 
 ```julia
-> using ILU
+> using ILU, LinearAlgebra, SparseArrays
 > using BenchmarkTools
 > A = sprand(1000, 1000, 5 / 1000) + 10I
 > fact = @btime crout_ilu($A, τ = 0.001)
-  3.853 ms (96 allocations: 1.18 MiB)
-> vecnorm((fact.L + I) * fact.U.' - A)
-0.05610746209883846
+  2.894 ms (90 allocations: 1.18 MiB)
+> norm((fact.L + I) * fact.U' - A)
+0.05736313452207798
 > nnz(fact) / nnz(A)
-3.670773780187284
+3.6793806030969844
 ```
 
 Full LU is obtained when the drop tolerance is `0.0`.
 
 ```julia
 > fact = @btime crout_ilu($A, τ = 0.)
-  629.361 ms (112 allocations: 12.18 MiB)
-> vecnorm((fact.L + I) * fact.U.' - A)
-1.532520861565543e-13
+  209.293 ms (106 allocations: 12.18 MiB)
+> norm((fact.L + I) * fact.U' - A)
+1.5262736852530086e-13
 > nnz(fact) / nnz(A)
-61.66009528503368
+69.34213528932355
 ```
 
 ## Preconditioner
 ILU is typically used as preconditioner for iterative methods. For instance
 
 ```julia
-using IterativeSolvers
+using IterativeSolvers, ILU
+using SparseArrays, LinearAlgebra
 using BenchmarkTools
 using Plots
-using ILU
 
 """
 Benchmarks a non-symmetric 64 × 64 × 64 problem
@@ -104,8 +116,12 @@ with and without the ILU preconditioner.
 function mytest(n = 64)
     N = n^3
 
-    A = spdiagm((fill(-1.0, n - 1), fill(3.0, n), fill(-2.0, n - 1)), (-1, 0, 1))
-    Id = speye(n)
+    A = spdiagm(
+      -1 => fill(-1.0, n - 1), 
+       0 => fill(3.0, n), 
+       1 => fill(-2.0, n - 1)
+    )
+    Id = sparse(1.0I, n, n)
     A = kron(A, Id) + kron(Id, A)
     A = kron(A, Id) + kron(Id, A)
     x = ones(N)
@@ -115,12 +131,12 @@ function mytest(n = 64)
     @show nnz(LU) / nnz(A)
 
     # Bench
-    prec = @benchmark crout_ilu($A, τ = 0.1)
-    @show prec
-    with = @benchmark bicgstabl($A, $b, 2, Pl = $LU, max_mv_products = 2000)
-    @show with
-    without = @benchmark bicgstabl($A, $b, 2, max_mv_products = 2000)
-    @show without
+    #prec = @benchmark crout_ilu($A, τ = 0.1)
+    #@show prec
+    #with = @benchmark bicgstabl($A, $b, 2, Pl = $LU, max_mv_products = 2000)
+    #@show with
+    #without = @benchmark bicgstabl($A, $b, 2, max_mv_products = 2000)
+    #@show without
 
     # Result
     x_with, hist_with = bicgstabl(A, b, 2, Pl = LU, max_mv_products = 2000, log = true)
@@ -129,8 +145,8 @@ function mytest(n = 64)
     @show norm(b - A * x_with) / norm(b) 
     @show norm(b - A * x_without) / norm(b)
 
-    plot(hist_with[:resnorm], yscale = :log10, label = "With ILU preconditioning", xlabel = "Iteration", ylabel = "Residual norm (preconditioned)")
-    plot!(hist_without[:resnorm], label = "Without preconditioning")
+    plot(hist_with[:resnorm], yscale = :log10, label = "With ILU preconditioning", xlabel = "Iteration", ylabel = "Residual norm (preconditioned)", mark = :x)
+    plot!(hist_without[:resnorm], label = "Without preconditioning", mark = :x)
 end
 
 mytest()
@@ -140,11 +156,15 @@ Outputs
 
 ```julia
 nnz(LU) / nnz(A) = 2.1180353639352374
-prec = Trial(611.019 ms)
-with = Trial(692.187 ms)
-without = Trial(2.051 s)
-norm(b - A * x_with) / norm(b) = 2.133397068536056e-9
-norm(b - A * x_without) / norm(b) = 1.6967043606691152e-9
+prec = Trial(443.781 ms)
+with = Trial(766.141 ms)
+without = Trial(2.595 s)
+norm(b - A * x_with) / norm(b) = 2.619046427010899e-9
+norm(b - A * x_without) / norm(b) = 1.2501603557459283e-8
 ```
 
 ![Residual norm with preconditioner](https://haampie.github.io/ILU.jl/residual3.png)
+
+## Todo
+The method does not implement scaling techniques, so the `τ` parameter is really an
+absolute dropping tolerance parameter.

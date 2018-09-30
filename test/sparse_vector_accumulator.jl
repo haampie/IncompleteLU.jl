@@ -1,11 +1,5 @@
-@static if VERSION < v"0.7.0"
-    using Base.Test
-else
-    using Test
-end
-
-using ILU
-import ILU: SparseVectorAccumulator, add!, axpy!, append_col!, isoccupied
+using ILU: SparseVectorAccumulator, add!, append_col!, isoccupied
+using LinearAlgebra
 
 @testset "SparseVectorAccumulator" begin
     @testset "Initialization" begin
@@ -23,7 +17,7 @@ import ILU: SparseVectorAccumulator, add!, axpy!, append_col!, isoccupied
         @test isoccupied(v, 1) == false
         @test isoccupied(v, 2)
         @test isoccupied(v, 3)
-        @test convert(Vector, v) == [0.; 3.0; 2.0]
+        @test Vector(v) == [0.; 3.0; 2.0]
     end
 
     @testset "Add column of SparseMatrixCSC" begin
@@ -32,7 +26,7 @@ import ILU: SparseVectorAccumulator, add!, axpy!, append_col!, isoccupied
         A = sprand(5, 5, 1.0)
         axpy!(2., A, 3, A.colptr[3], v)
         axpy!(3., A, 4, A.colptr[4], v)
-        @test convert(Vector, v) == 2 * A[:, 3] + 3 * A[:, 4]
+        @test Vector(v) == 2 * A[:, 3] + 3 * A[:, 4]
     end
 
     @testset "Append column to SparseMatrixCSC" begin

@@ -1,10 +1,6 @@
-@static if VERSION < v"0.7.0"
-    using Base.Test
-else
-    using Test
-end
+using Test
 
-import ILU: InsertableSparseVector, add!, axpy!, append_col!
+using ILU: InsertableSparseVector, add!, axpy!, append_col!, indices
 
 @testset "InsertableSparseVector" begin
     @testset "Insertion sorted sparse vector" begin
@@ -24,7 +20,7 @@ import ILU: InsertableSparseVector, add!, axpy!, append_col!
         A = sprand(5, 5, 1.0)
         axpy!(2., A, 3, A.colptr[3], v)
         axpy!(3., A, 4, A.colptr[4], v)
-        @test convert(Vector, v) == 2 * A[:, 3] + 3 * A[:, 4]
+        @test Vector(v) == 2 * A[:, 3] + 3 * A[:, 4]
     end
 
     @testset "Append column to SparseMatrixCSC" begin

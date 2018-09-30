@@ -1,11 +1,6 @@
-@static if VERSION < v"0.7.0"
-    using Base.Test
-else
-    using Test
-end
-
-using ILU
-import ILU: forward_substitution_without_diag!, transposed_backward_substitution!
+using Test
+using ILU: ILUFactorization, forward_substitution_without_diag!, transposed_backward_substitution!
+using LinearAlgebra
 
 @testset "Backward substitution" begin
     function test_bw_substitution(A::SparseMatrixCSC)
@@ -13,7 +8,7 @@ import ILU: forward_substitution_without_diag!, transposed_backward_substitution
         y = copy(x)
 
         forward_substitution_without_diag!(A, x)
-        A_ldiv_B!(LowerTriangular(A + I), y)
+        ldiv!(LowerTriangular(A + I), y)
 
         @test x ≈ y
     end
@@ -29,7 +24,7 @@ end
         y = copy(x)
 
         transposed_backward_substitution!(A, x)
-        A_ldiv_B!(UpperTriangular(A.'), y)
+        ldiv!(UpperTriangular(transpose(A)), y)
 
         @test x ≈ y
     end
@@ -39,27 +34,27 @@ end
     test_fw_substitution(spzeros(10, 10) + 10I)
 end
 
-@testset "A_ldiv_B!" begin
-    function test_A_ldiv_B!(L, U)
+@testset "ldiv!" begin
+    function test_ldiv!(L, U)
         LU = ILUFactorization(L, U)
         x = rand(size(LU.L, 1))
         y = copy(x)
         z = copy(x)
         w = copy(x)
 
-        A_ldiv_B!(LU, x)
-        A_ldiv_B!(LowerTriangular(LU.L + I), y)
-        A_ldiv_B!(UpperTriangular(LU.U.'), y)
+        ldiv!(LU, x)
+        ldiv!(LowerTriangular(LU.L + I), y)
+        ldiv!(UpperTriangular(transpose(LU.U)), y)
 
         @test x ≈ y
         @test LU \ z == x
 
-        A_ldiv_B!(w, LU, z)
+        ldiv!(w, LU, z)
 
         @test w == x
     end
 
-    test_A_ldiv_B!(tril(sprand(10, 10, .5), -1), tril(sprand(10, 10, .5) + 10I))
+    test_ldiv!(tril(sprand(10, 10, .5), -1), tril(sprand(10, 10, .5) + 10I))
 end
 
 @testset "nnz" begin

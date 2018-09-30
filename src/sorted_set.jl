@@ -1,7 +1,6 @@
-import Base: start, next, done, push!, 
-       convert, getindex, setindex!, show, empty!
+import Base: iterate, push!, Vector, getindex, setindex!, show, empty!
 
-export SortedSet
+using Base: @propagate_inbounds
 
 """
 SortedSet keeps track of a sorted set of integers ≤ N
@@ -25,27 +24,28 @@ struct SortedSet
     N::Int
 
     function SortedSet(N::Int)
-        next = Vector{Int}(N + 1)
-        next[N + 1] = N + 1
+        next = Vector{Int}(undef, N + 1)
+        @inbounds next[N + 1] = N + 1
         new(next, N + 1)
     end
 end
 
 # Convenience wrappers for indexing
-@inline getindex(s::SortedSet, i::Int) = s.next[i]
-@inline setindex!(s::SortedSet, value::Int, i::Int) = s.next[i] = value
+@propagate_inbounds getindex(s::SortedSet, i::Int) = s.next[i]
+@propagate_inbounds setindex!(s::SortedSet, value::Int, i::Int) = s.next[i] = value
 
 # Iterate in 
-@inline start(s::SortedSet) = s.N
-@inline next(s::SortedSet, p::Int) = s[p], s[p]
-@inline done(s::SortedSet, p::Int) = s[p] == s.N
+@inline function iterate(s::SortedSet, p::Int = s.N) 
+    @inbounds nxt = s[p]
+    return nxt == s.N ? nothing : (nxt, nxt)
+end
 
-show(io::IO, s::SortedSet) = print(io, typeof(s), " with values ", convert(Vector, s))
+show(io::IO, s::SortedSet) = print(io, typeof(s), " with values ", Vector(s))
 
 """
 For debugging and testing
 """
-function convert(::Type{Vector}, s::SortedSet)
+function Vector(s::SortedSet)
     v = Int[]
     for index in s
         push!(v, index)
@@ -57,17 +57,19 @@ end
 Insert `index` after a known value `after`
 """
 function push!(s::SortedSet, value::Int, after::Int)
-    while s[after] < value
-        after = s[after]
-    end
+    @inbounds begin
+        while s[after] < value
+            after = s[after]
+        end
 
-    if s[after] == value
-        return false
+        if s[after] == value
+            return false
+        end
+        
+        s[after], s[value] = value, s[after]
+        
+        return true
     end
-    
-    s[after], s[value] = value, s[after]
-    
-    return true
 end
 
 """
