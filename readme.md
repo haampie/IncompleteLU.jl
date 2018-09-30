@@ -5,73 +5,26 @@
 This package implements the left-looking or Crout version of ILU for 
 the `SparseMatrixCSC` type. It only exports the function `ilu`.
 
+## How to install
+
+In the REPL hit `]` to open the package manager and run
+
+```julia
+(v1.0) pkg> add IncompleteLU
+```
+
+The package is then available via
+
+```julia
+julia> using IncompleteLU
+```
+
 ## When to use this package
 
 Whenever you need an incomplete factorization of a sparse and _non-symmetric_ matrix.
 
 The package also provides means to apply the factorization in-place via `ldiv!`. This is 
 useful in the context of preconditioning. See the example below.
-
-## The algorithm
-
-The basic algorithm loops roughly as follows:
-
-```
-for k = 1 : n
-  row = zeros(n); row[k:n] = A[k,k:n]
-  col = zeros(n); col[k+1:n] = A[k+1:n,k]
-
-  for i = 1 : k - 1 where L[k,i] != 0
-    row -= L[k,i] * U[i,k:n]
-  end
-
-  for i = 1 : k - 1 where U[i,k] != 0
-    col -= U[i,k] * L[k+1:n,i]
-  end
-
-  # Apply a dropping rule in row and col
-
-  U[k,:] = row
-  L[:,k] = col / U[k,k]
-  L[k,k] = 1
-end
-```
-
-which means that at each step `k` a complete row and column are computed based on the previous rows and columns:
-
-```
-          k
-+---+---+---+---+---+---+---+---+
-| \ |   | x | x | x | x | x | x |
-+---+---+---+---+---+---+---+---+
-|   | \ | x | x | x | x | x | x |
-+---+---+---+---+---+---+---+---+
-|   |   | . | . | . | . | . | . | k
-+---+---+---+---+---+---+---+---+
-| x | x | . | \ |   |   |   |   |
-+---+---+---+---+---+---+---+---+
-| x | x | . |   | \ |   |   |   |
-+---+---+---+---+---+---+---+---+
-| x | x | . |   |   | \ |   |   |
-+---+---+---+---+---+---+---+---+
-| x | x | . |   |   |   | \ |   |
-+---+---+---+---+---+---+---+---+
-| x | x | . |   |   |   |   | \ |
-+---+---+---+---+---+---+---+---+
-
-col and row are the .'s, updated by the x's.
-```
-
-At step `k` we load (part of) a row and column of the matrix `A`, and subtract the previous rows and columns times a scalar (basically a SpMV product). The problem is that our matrix is column-major, so that loading a row is not cheap. Secondly, it makes sense to store the `L` factor column-wise and the `U` factor row-wise (so that we can append columns and rows without data movement), yet we need access to a row of `L` and a column of `U`.
-
-The latter problem can be worked around without expensive searches. It's basically smart bookkeeping: going from step `k` to `k+1` requires updating indices to the next nonzero of each row of `U` after column `k`. If you now store for each column of `U` a list of nonzero indices, this is the moment you can update it. Similarly for the `L` factor.
-
-The matrix `A` can be read row by row as well with the same trick.
-
-## Accumulating a new sparse row or column
-Throughout the steps two temporary row and column accumulators are used to store the linear combinations of previous sparse rows and columns. There are two implementations of this accumulator: the `SparseVectorAccumulator` performs insertion in `O(1)`, but stores the indices unordered; therefore a sort is required when appending to the `SparseMatrixCSC`. The `InsertableSparseVector` performs insertion sort, which can be slow, but turns out to be fast in practice. The latter is a result of insertion itself being an `O(1)` operation due to a linked list structure, and the fact that sorted vectors are added, so that the linear scan does not have to restart at each insertion.
-
-The advantage of `SparseVectorAccumulator` over `InsertableSparseVector` is that the former postpones sorting until after dropping, while `InsertableSparseVector` also performs insertion sort on dropped values.
 
 ## Example
 
@@ -164,6 +117,67 @@ norm(b - A * x_without) / norm(b) = 1.2501603557459283e-8
 ```
 
 ![Residual norm with preconditioner](https://haampie.github.io/IncompleteLU.jl/residual3.png)
+
+## The algorithm
+
+The basic algorithm loops roughly as follows:
+
+```
+for k = 1 : n
+  row = zeros(n); row[k:n] = A[k,k:n]
+  col = zeros(n); col[k+1:n] = A[k+1:n,k]
+
+  for i = 1 : k - 1 where L[k,i] != 0
+    row -= L[k,i] * U[i,k:n]
+  end
+
+  for i = 1 : k - 1 where U[i,k] != 0
+    col -= U[i,k] * L[k+1:n,i]
+  end
+
+  # Apply a dropping rule in row and col
+
+  U[k,:] = row
+  L[:,k] = col / U[k,k]
+  L[k,k] = 1
+end
+```
+
+which means that at each step `k` a complete row and column are computed based on the previous rows and columns:
+
+```
+          k
++---+---+---+---+---+---+---+---+
+| \ |   | x | x | x | x | x | x |
++---+---+---+---+---+---+---+---+
+|   | \ | x | x | x | x | x | x |
++---+---+---+---+---+---+---+---+
+|   |   | . | . | . | . | . | . | k
++---+---+---+---+---+---+---+---+
+| x | x | . | \ |   |   |   |   |
++---+---+---+---+---+---+---+---+
+| x | x | . |   | \ |   |   |   |
++---+---+---+---+---+---+---+---+
+| x | x | . |   |   | \ |   |   |
++---+---+---+---+---+---+---+---+
+| x | x | . |   |   |   | \ |   |
++---+---+---+---+---+---+---+---+
+| x | x | . |   |   |   |   | \ |
++---+---+---+---+---+---+---+---+
+
+col and row are the .'s, updated by the x's.
+```
+
+At step `k` we load (part of) a row and column of the matrix `A`, and subtract the previous rows and columns times a scalar (basically a SpMV product). The problem is that our matrix is column-major, so that loading a row is not cheap. Secondly, it makes sense to store the `L` factor column-wise and the `U` factor row-wise (so that we can append columns and rows without data movement), yet we need access to a row of `L` and a column of `U`.
+
+The latter problem can be worked around without expensive searches. It's basically smart bookkeeping: going from step `k` to `k+1` requires updating indices to the next nonzero of each row of `U` after column `k`. If you now store for each column of `U` a list of nonzero indices, this is the moment you can update it. Similarly for the `L` factor.
+
+The matrix `A` can be read row by row as well with the same trick.
+
+## Accumulating a new sparse row or column
+Throughout the steps two temporary row and column accumulators are used to store the linear combinations of previous sparse rows and columns. There are two implementations of this accumulator: the `SparseVectorAccumulator` performs insertion in `O(1)`, but stores the indices unordered; therefore a sort is required when appending to the `SparseMatrixCSC`. The `InsertableSparseVector` performs insertion sort, which can be slow, but turns out to be fast in practice. The latter is a result of insertion itself being an `O(1)` operation due to a linked list structure, and the fact that sorted vectors are added, so that the linear scan does not have to restart at each insertion.
+
+The advantage of `SparseVectorAccumulator` over `InsertableSparseVector` is that the former postpones sorting until after dropping, while `InsertableSparseVector` also performs insertion sort on dropped values.
 
 ## Todo
 The method does not implement scaling techniques, so the `τ` parameter is really an
