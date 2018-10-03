@@ -1,6 +1,7 @@
 module IncompleteLU
 
 using SparseArrays
+using Base: @propagate_inbounds
 
 struct ILUFactorization{T}
     L::SparseMatrixCSC{T}

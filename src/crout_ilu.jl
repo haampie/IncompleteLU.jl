@@ -101,5 +101,5 @@ function ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
         end
     end
 
-    ILUFactorization(L, U)
+    return ILUFactorization(L, U)
 end

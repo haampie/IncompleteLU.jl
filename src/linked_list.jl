@@ -22,7 +22,7 @@ LinkedLists(n::Int) = LinkedLists(zeros(n), zeros(n))
 For the L-factor: insert in row `head` column `value`
 For the U-factor: insert in column `head` row `value`
 """
-function push!(l::LinkedLists, head::Int, value::Int)
+@propagate_inbounds function push!(l::LinkedLists, head::Int, value::Int)
     l.head[head], l.next[value] = value, l.head[head]
     return l
 end
@@ -35,9 +35,9 @@ end
 
 function RowReader(A::SparseMatrixCSC{T,I}) where {T,I}
     n = size(A, 2)
-    next_in_column = [A.colptr[i] for i = 1 : n]
+    @inbounds next_in_column = [A.colptr[i] for i = 1 : n]
     rows = LinkedLists(n)
-    for i = 1 : n
+    @inbounds for i = 1 : n
         push!(rows, A.rowval[A.colptr[i]], i)
     end
     return RowReader(A, next_in_column, rows)
@@ -48,19 +48,14 @@ function RowReader(A::SparseMatrixCSC{T,I}, initialize::Type{Val{false}}) where 
     return RowReader(A, zeros(Int, n), LinkedLists(n))
 end
 
-nzidx(r::RowReader, column::Int) = r.next_in_column[column]
-nzrow(r::RowReader, column::Int) = r.A.rowval[nzidx(r, column)]
-nzval(r::RowReader, column::Int) = r.A.nzval[nzidx(r, column)]
+@propagate_inbounds nzidx(r::RowReader, column::Int) = r.next_in_column[column]
+@propagate_inbounds nzrow(r::RowReader, column::Int) = r.A.rowval[nzidx(r, column)]
+@propagate_inbounds nzval(r::RowReader, column::Int) = r.A.nzval[nzidx(r, column)]
 
-has_next_nonzero(r::RowReader, column::Int) = nzidx(r, column) < r.A.colptr[column + 1]
-enqueue_next_nonzero!(r::RowReader, column::Int) = push!(r.rows, nzrow(r, column), column)
-next_column(r::RowReader, column::Int) = r.rows.next[column]
-first_in_row(r::RowReader, row::Int) = r.rows.head[row]
-is_column(column::Int) = column != 0
-next_row!(r::RowReader, column::Int) = r.next_in_column[column] += 1
+@propagate_inbounds has_next_nonzero(r::RowReader, column::Int) = nzidx(r, column) < r.A.colptr[column + 1]
+@propagate_inbounds enqueue_next_nonzero!(r::RowReader, column::Int) = push!(r.rows, nzrow(r, column), column)
+@propagate_inbounds next_column(r::RowReader, column::Int) = r.rows.next[column]
+@propagate_inbounds first_in_row(r::RowReader, row::Int) = r.rows.head[row]
+@propagate_inbounds is_column(column::Int) = column != 0
+@propagate_inbounds next_row!(r::RowReader, column::Int) = r.next_in_column[column] += 1
 
-# function next_column!(r::RowReader, column::Int)
-#     next_column = next_in_row(r, column)
-#     r.next_in_column[column] += 1
-#     next_column
-# end

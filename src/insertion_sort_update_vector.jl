@@ -14,14 +14,14 @@ struct InsertableSparseVector{Tv}
     InsertableSparseVector{Tv}(n::Int) where {Tv} = new(Vector{Tv}(undef, n), SortedSet(n))
 end
 
-@inline getindex(v::InsertableSparseVector{Tv}, idx::Int) where {Tv} = v.values[idx]
-@inline setindex!(v::InsertableSparseVector{Tv}, value::Tv, idx::Int) where {Tv} = v.values[idx] = value
+@propagate_inbounds getindex(v::InsertableSparseVector{Tv}, idx::Int) where {Tv} = v.values[idx]
+@propagate_inbounds setindex!(v::InsertableSparseVector{Tv}, value::Tv, idx::Int) where {Tv} = v.values[idx] = value
 @inline indices(v::InsertableSparseVector) = Vector(v.indices)
 
 function Vector(v::InsertableSparseVector{Tv}) where {Tv}
     vals = zeros(Tv, v.indices.N - 1)
     for index in v.indices
-        vals[index] = v.values[index]
+        @inbounds vals[index] = v.values[index]
     end
     return vals
 end
@@ -34,9 +34,9 @@ are added.
 """
 function add!(v::InsertableSparseVector{Tv}, a::Tv, idx::Int, prev_idx::Int) where {Tv}
     if push!(v.indices, idx, prev_idx)
-        v[idx] = a
+        @inbounds v[idx] = a
     else
-        v[idx] += a
+        @inbounds v[idx] += a
     end
 
     v
@@ -45,7 +45,7 @@ end
 """
 Add without providing a previous index.
 """
-@inline add!(v::InsertableSparseVector{Tv}, a::Tv, idx::Int) where {Tv} = add!(v, a, idx, v.indices.N)
+@propagate_inbounds add!(v::InsertableSparseVector{Tv}, a::Tv, idx::Int) where {Tv} = add!(v, a, idx, v.indices.N)
 
 function axpy!(a::Tv, A::SparseMatrixCSC{Tv}, column::Int, start::Int, y::InsertableSparseVector{Tv}) where {Tv}
     prev_index = y.indices.N
@@ -76,7 +76,7 @@ function append_col!(A::SparseMatrixCSC{Tv}, y::InsertableSparseVector{Tv}, j::I
     
     total = 0
     
-    for row = y.indices
+    @inbounds for row = y.indices
         if abs(y[row]) ≥ drop || row == j
             push!(A.rowval, row)
             push!(A.nzval, scale * y[row])
@@ -84,7 +84,7 @@ function append_col!(A::SparseMatrixCSC{Tv}, y::InsertableSparseVector{Tv}, j::I
         end
     end
 
-    A.colptr[j + 1] = A.colptr[j] + total
+    @inbounds A.colptr[j + 1] = A.colptr[j] + total
     
     empty!(y)
 

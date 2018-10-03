@@ -1,7 +1,5 @@
 import Base: iterate, push!, Vector, getindex, setindex!, show, empty!
 
-using Base: @propagate_inbounds
-
 """
 SortedSet keeps track of a sorted set of integers ≤ N
 using insertion sort with a linked list structure in a pre-allocated 

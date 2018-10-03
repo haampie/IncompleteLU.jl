@@ -29,7 +29,7 @@ mutable struct SparseVectorAccumulator{T}
     length::Int
     curr::Int
 
-    SparseVectorAccumulator{T}(N::Int) where {T} = new(
+    return SparseVectorAccumulator{T}(N::Int) where {T} = new(
         zeros(Int, N),
         Vector{Int}(undef, N),
         Vector{T}(undef, N),
@@ -41,8 +41,8 @@ end
 
 function Vector(v::SparseVectorAccumulator{T}) where {T}
     x = zeros(T, v.length)
-    x[v.nzind[1 : v.nnz]] = v.nzval[v.nzind[1 : v.nnz]]
-    x
+    @inbounds x[v.nzind[1 : v.nnz]] = v.nzval[v.nzind[1 : v.nnz]]
+    return x
 end
 
 """
@@ -51,11 +51,11 @@ starting at a given index until the end.
 """
 function axpy!(a::Tv, A::SparseMatrixCSC{Tv}, column::Int, start::Int, y::SparseVectorAccumulator{Tv}) where {Tv}
     # Loop over the whole column of A
-    for idx = start : A.colptr[column + 1] - 1
+    @inbounds for idx = start : A.colptr[column + 1] - 1
         add!(y, a * A.nzval[idx], A.rowval[idx])
     end
 
-    y
+    return y
 end
 
 """
@@ -63,22 +63,24 @@ Sets `v[idx] += a` when `idx` is occupied, or sets `v[idx] = a`.
 Complexity is O(1).
 """
 function add!(v::SparseVectorAccumulator{Tv}, a::Tv, idx::Int) where {Tv}
-    if isoccupied(v, idx)
-        v.nzval[idx] += a
-    else
-        v.nnz += 1
-        v.occupied[idx] = v.curr
-        v.nzval[idx] = a
-        v.nzind[v.nnz] = idx
+    @inbounds begin
+        if isoccupied(v, idx)
+            v.nzval[idx] += a
+        else
+            v.nnz += 1
+            v.occupied[idx] = v.curr
+            v.nzval[idx] = a
+            v.nzind[v.nnz] = idx
+        end
     end
 
-    nothing
+    return nothing
 end
 
 """
 Check whether `idx` is nonzero.
 """
-@inline isoccupied(v::SparseVectorAccumulator, idx::Int) = v.occupied[idx] == v.curr
+@propagate_inbounds isoccupied(v::SparseVectorAccumulator, idx::Int) = v.occupied[idx] == v.curr
 
 """
 Empty the SparseVectorAccumulator in O(1) operations.
@@ -102,7 +104,7 @@ function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::
     # Move the indices of interest up front
     total = 0
 
-    for idx = 1 : y.nnz
+    @inbounds for idx = 1 : y.nnz
         row = y.nzind[idx]
         value = y.nzval[row]
 
@@ -115,15 +117,15 @@ function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::
     # Sort the retained values.
     sort!(y.nzind, 1, total, Base.Sort.QuickSortAlg(), Base.Order.Forward)
     
-    for idx = 1 : total
+    @inbounds for idx = 1 : total
         row = y.nzind[idx]
         push!(A.rowval, row)
         push!(A.nzval, scale * y.nzval[row])
     end
 
-    A.colptr[j + 1] = A.colptr[j] + total
+    @inbounds A.colptr[j + 1] = A.colptr[j] + total
     
     empty!(y)
 
-    nothing
+    return nothing
 end
