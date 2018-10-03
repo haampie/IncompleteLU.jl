@@ -63,7 +63,7 @@ using BenchmarkTools
 using Plots
 
 """
-Benchmarks a non-symmetric 64 × 64 × 64 problem
+Benchmarks a non-symmetric n × n × n problem
 with and without the ILU preconditioner.
 """
 function mytest(n = 64)
@@ -84,12 +84,12 @@ function mytest(n = 64)
     @show nnz(LU) / nnz(A)
 
     # Bench
-    #prec = @benchmark ilu($A, τ = 0.1)
-    #@show prec
-    #with = @benchmark bicgstabl($A, $b, 2, Pl = $LU, max_mv_products = 2000)
-    #@show with
-    #without = @benchmark bicgstabl($A, $b, 2, max_mv_products = 2000)
-    #@show without
+    prec = @benchmark ilu($A, τ = 0.1)
+    @show prec
+    with = @benchmark bicgstabl($A, $b, 2, Pl = $LU, max_mv_products = 2000)
+    @show with
+    without = @benchmark bicgstabl($A, $b, 2, max_mv_products = 2000)
+    @show without
 
     # Result
     x_with, hist_with = bicgstabl(A, b, 2, Pl = LU, max_mv_products = 2000, log = true)
