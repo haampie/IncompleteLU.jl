@@ -17,7 +17,11 @@ function ldiv!(F::ILUFactorization, y::AbstractVector)
     transposed_backward_substitution!(F.U, y)
 end
 
-(\)(F::ILUFactorization, y::AbstractVector) = ldiv!(F, copy(y))
+function (\)(F::ILUFactorization{Tv}, x::AbstractVector{Tv2}) where {Tv,Tv2}
+    Tv3 = promote_type(Tv,Tv2)
+    y = Tv3.(copy(x))
+    ldiv!(F, y)
+end
 
 function ldiv!(y::AbstractVector, F::ILUFactorization, x::AbstractVector)
     copyto!(y, x)

@@ -72,12 +72,12 @@ Resets the `InsertableSparseVector`.
 Note: does *not* update `A.colptr` for columns > j + 1,
 as that is done during the steps.
 """
-function append_col!(A::SparseMatrixCSC{Tv}, y::InsertableSparseVector{Tv}, j::Int, drop::Tv, scale::Tv = one(Tv)) where {Tv}
+function append_col!(A::SparseMatrixCSC{Tv}, y::InsertableSparseVector{Tv}, j::Int, drop::Tv2, scale::Tv = one(Tv)) where {Tv,Tv2}
     
     total = 0
     
     @inbounds for row = y.indices
-        if abs(y[row]) ≥ drop || row == j
+        if abs(y[row]) ≥ abs(drop) || row == j
             push!(A.rowval, row)
             push!(A.nzval, scale * y[row])
             total += 1

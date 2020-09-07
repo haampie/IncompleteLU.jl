@@ -100,7 +100,7 @@ Resets the `SparseVectorAccumulator`.
 Note: does *not* update `A.colptr` for columns > j + 1,
 as that is done during the steps.
 """
-function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::Int, drop::Tv, scale::Tv = one(Tv)) where {Tv}
+function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::Int, drop::Tv2, scale::Tv = one(Tv)) where {Tv,Tv2}
     # Move the indices of interest up front
     total = 0
 
@@ -108,7 +108,7 @@ function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::
         row = y.nzind[idx]
         value = y.nzval[row]
 
-        if abs(value) ≥ drop || row == j
+        if abs(value) ≥ abs(drop) || row == j
             total += 1
             y.nzind[total] = row
         end

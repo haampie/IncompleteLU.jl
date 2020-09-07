@@ -1,6 +1,6 @@
 export ilu
 
-function ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
+function ilu(A::SparseMatrixCSC{T,I}; τ::S = 1e-3) where {T,S,I}
     n = size(A, 1)
 
     L = spzeros(T, n, n)
