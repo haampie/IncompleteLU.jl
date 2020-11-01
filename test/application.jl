@@ -1,37 +1,55 @@
 using Test
-using IncompleteLU: ILUFactorization, forward_substitution_without_diag!, transposed_backward_substitution!
+using IncompleteLU: ILUFactorization, forward_substitution!, backward_substitution!
 using LinearAlgebra
 
-@testset "Backward substitution" begin
-    function test_bw_substitution(A::SparseMatrixCSC)
-        x = rand(size(A, 1))
+@testset "Forward and backward substitutions" begin
+    function test_fw_substitution(F::ILUFactorization)
+        A = F.L
+        n = size(A, 1)
+        x = rand(n)
         y = copy(x)
+        v = zeros(n)
 
-        forward_substitution_without_diag!(A, x)
+        forward_substitution!(v, F, x)
+        forward_substitution!(F, x)
         ldiv!(LowerTriangular(A + I), y)
 
+        @test v ≈ y
         @test x ≈ y
     end
 
-    test_bw_substitution(sparse(tril(rand(10, 10), -1)))
-    test_bw_substitution(tril(sprand(10, 10, .5), -1))
-    test_bw_substitution(spzeros(10, 10))
-end
-
-@testset "Forward substitution" begin
-    function test_fw_substitution(A::SparseMatrixCSC)
-        x = rand(size(A, 1))
+    function test_bw_substitution(F::ILUFactorization)
+        A = F.U
+        n = size(A, 1)
+        x = rand(n)
         y = copy(x)
+        v = zeros(n)
 
-        transposed_backward_substitution!(A, x)
+        backward_substitution!(v, F, x)
+        backward_substitution!(F, x)
         ldiv!(UpperTriangular(transpose(A)), y)
 
+        @test v ≈ y
         @test x ≈ y
     end
 
-    test_fw_substitution(sparse(tril(rand(10, 10)) + 10I))
-    test_fw_substitution(tril(sprand(10, 10, .5) + 10I))
-    test_fw_substitution(spzeros(10, 10) + 10I)
+    L = sparse(tril(rand(10, 10), -1))
+    U = sparse(tril(rand(10, 10)) + 10I)
+    F = ILUFactorization(L, U)
+    test_fw_substitution(F)
+    test_bw_substitution(F)
+
+    L = sparse(tril(tril(sprand(10, 10, .5), -1)))
+    U = sparse(tril(sprand(10, 10, .5) + 10I))
+    F = ILUFactorization(L, U)
+    test_fw_substitution(F)
+    test_bw_substitution(F)
+
+    L = spzeros(10, 10)
+    U = spzeros(10, 10) + 10I
+    F = ILUFactorization(L, U)
+    test_fw_substitution(F)
+    test_bw_substitution(F)
 end
 
 @testset "ldiv!" begin
