@@ -3,14 +3,15 @@
 # ILU for SparseMatrixCSC
 
 This package implements the left-looking or Crout version of ILU for 
-the `SparseMatrixCSC` type. It only exports the function `ilu`.
+the `SparseMatrixCSC` type. It exports the function `ilu`.
 
 ## How to install
 
-In the REPL hit `]` to open the package manager and run
+`IncompleteLU` can be installed through the Julia package manager:
 
 ```julia
-(v1.0) pkg> add IncompleteLU
+julia> ]
+pkg> add IncompleteLU
 ```
 
 The package is then available via
@@ -23,8 +24,8 @@ julia> using IncompleteLU
 
 Whenever you need an incomplete factorization of a sparse and _non-symmetric_ matrix.
 
-The package also provides means to apply the factorization in-place via `ldiv!`. This is 
-useful in the context of preconditioning. See the example below.
+The package also provides means to apply the factorization in-place via `ldiv!`, `forward_substitution!` and `backward_substitution!`.
+This is useful in the context of left, right or split preconditioning. See the example below.
 
 ## Example
 
@@ -83,7 +84,7 @@ function mytest(n = 64)
     LU = ilu(A, τ = 0.1)
     @show nnz(LU) / nnz(A)
 
-    # Bench
+    # Benchmarks
     prec = @benchmark ilu($A, τ = 0.1)
     @show prec
     with = @benchmark bicgstabl($A, $b, 2, Pl = $LU, max_mv_products = 2000)
