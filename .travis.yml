@@ -1,10 +1,20 @@
 language: julia
+
 os:
+  - osx
   - linux
+  - windows
+  - freebsd
+
 julia:
-  - 1.0
-notifications:
-  email: false
-after_success:
-- julia -e 'using Pkg; Pkg.add(["Coverage"])'
-- julia -e 'using Pkg, Coverage, IncompleteLU; cd(joinpath(dirname(pathof(IncompleteLU)), "..")); Codecov.submit(process_folder())'
+  - 1
+  - nightly
+
+branches:
+  only:
+    - master
+    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/ # tags
+
+jobs:
+  allow_failures:
+    - julia: nightly
