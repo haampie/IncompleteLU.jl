@@ -1,10 +1,7 @@
 language: julia
 
 os:
-  - osx
   - linux
-  - windows
-  - freebsd
 
 julia:
   - 1
