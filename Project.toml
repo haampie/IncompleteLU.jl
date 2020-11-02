@@ -1,7 +1,7 @@
 name = "IncompleteLU"
 uuid = "026e27e3-decc-44e5-8025-ca6ab3bc6c72"
 author = ["Harmen Stoppels <me@harmenstoppels.nl>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
