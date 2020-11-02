@@ -49,7 +49,7 @@ end
 
 function backward_substitution!(v::AbstractVector, F::ILUFactorization, y::AbstractVector)
     v .= y
-    backward_substitution!(U, v)
+    backward_substitution!(F, v)
 end
 
 """
