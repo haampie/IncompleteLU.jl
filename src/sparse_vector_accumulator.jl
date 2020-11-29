@@ -21,18 +21,18 @@ nnz = 2
 length = 7
 curr = 1
 """
-mutable struct SparseVectorAccumulator{T}
-    occupied::Vector{Int}
-    nzind::Vector{Int}
-    nzval::Vector{T}
-    nnz::Int
-    length::Int
-    curr::Int
+mutable struct SparseVectorAccumulator{Tv,Ti}
+    occupied::Vector{Ti}
+    nzind::Vector{Ti}
+    nzval::Vector{Tv}
+    nnz::Ti
+    length::Ti
+    curr::Ti
 
-    return SparseVectorAccumulator{T}(N::Int) where {T} = new(
-        zeros(Int, N),
-        Vector{Int}(undef, N),
-        Vector{T}(undef, N),
+    return SparseVectorAccumulator{Tv,Ti}(N::Integer) where {Tv,Ti} = new(
+        zeros(Ti, N),
+        Vector{Ti}(undef, N),
+        Vector{Tv}(undef, N),
         0,
         N,
         1
@@ -49,7 +49,7 @@ end
 Add a part of a SparseMatrixCSC column to a SparseVectorAccumulator,
 starting at a given index until the end.
 """
-function axpy!(a::Tv, A::SparseMatrixCSC{Tv}, column::Int, start::Int, y::SparseVectorAccumulator{Tv}) where {Tv}
+function axpy!(a, A::SparseMatrixCSC, column, start, y::SparseVectorAccumulator)
     # Loop over the whole column of A
     @inbounds for idx = start : A.colptr[column + 1] - 1
         add!(y, a * A.nzval[idx], A.rowval[idx])
@@ -62,7 +62,7 @@ end
 Sets `v[idx] += a` when `idx` is occupied, or sets `v[idx] = a`.
 Complexity is O(1).
 """
-function add!(v::SparseVectorAccumulator{Tv}, a::Tv, idx::Int) where {Tv}
+function add!(v::SparseVectorAccumulator, a, idx)
     @inbounds begin
         if isoccupied(v, idx)
             v.nzval[idx] += a
@@ -80,7 +80,7 @@ end
 """
 Check whether `idx` is nonzero.
 """
-@propagate_inbounds isoccupied(v::SparseVectorAccumulator, idx::Int) = v.occupied[idx] == v.curr
+@propagate_inbounds isoccupied(v::SparseVectorAccumulator, idx::Integer) = v.occupied[idx] == v.curr
 
 """
 Empty the SparseVectorAccumulator in O(1) operations.
@@ -100,7 +100,7 @@ Resets the `SparseVectorAccumulator`.
 Note: does *not* update `A.colptr` for columns > j + 1,
 as that is done during the steps.
 """
-function append_col!(A::SparseMatrixCSC{Tv}, y::SparseVectorAccumulator{Tv}, j::Int, drop::Tv, scale::Tv = one(Tv)) where {Tv}
+function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator, j::Integer, drop, scale = one(eltype(A)))
     # Move the indices of interest up front
     total = 0
 
