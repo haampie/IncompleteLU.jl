@@ -3,9 +3,9 @@ module IncompleteLU
 using SparseArrays
 using Base: @propagate_inbounds
 
-struct ILUFactorization{T}
-    L::SparseMatrixCSC{T}
-    U::SparseMatrixCSC{T}
+struct ILUFactorization{Tv,Ti}
+    L::SparseMatrixCSC{Tv,Ti}
+    U::SparseMatrixCSC{Tv,Ti}
 end
 
 include("sorted_set.jl")
