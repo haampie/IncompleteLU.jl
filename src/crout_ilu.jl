@@ -1,19 +1,27 @@
 export ilu
 
-function ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
+function lutype(T::Type)
+    UT = typeof(oneunit(T) - oneunit(T) * (oneunit(T) / (oneunit(T) + zero(T))))
+    LT = typeof(oneunit(UT) / oneunit(UT))
+    S = promote_type(T, LT, UT)
+end
+
+function ilu(A::SparseMatrixCSC{ATv,Ti}; τ = 1e-3) where {ATv,Ti}
     n = size(A, 1)
 
-    L = spzeros(T, n, n)
-    U = spzeros(T, n, n)
+    Tv = lutype(ATv)
+
+    L = spzeros(Tv, Ti, n, n)
+    U = spzeros(Tv, Ti, n, n)
     
-    U_row = SparseVectorAccumulator{T}(n)
-    L_col = SparseVectorAccumulator{T}(n)
+    U_row = SparseVectorAccumulator{Tv,Ti}(n)
+    L_col = SparseVectorAccumulator{Tv,Ti}(n)
 
     A_reader = RowReader(A)
     L_reader = RowReader(L, Val{false})
     U_reader = RowReader(U, Val{false})
 
-    @inbounds for k = 1 : n
+    @inbounds for k = Ti(1) : Ti(n)
 
         ##
         ## Copy the new row into U_row and the new column into L_col
@@ -36,7 +44,7 @@ function ilu(A::SparseMatrixCSC{T,I}; τ = 1e-3) where {T,I}
         end
 
         # Copy the remaining part of the column into L_col
-        axpy!(one(T), A, k, nzidx(A_reader, k), L_col)
+        axpy!(one(Tv), A, k, nzidx(A_reader, k), L_col)
 
         ##
         ## Combine the vectors:

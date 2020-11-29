@@ -6,7 +6,7 @@ using SparseArrays
 @testset "Linked List" begin
     n = 5
     let
-        lists = LinkedLists(n)
+        lists = LinkedLists{Int}(n)
 
         # head[2] -> 5 -> nil
         # head[5] -> 4 -> 3 -> nil

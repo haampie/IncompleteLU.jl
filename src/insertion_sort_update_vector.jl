@@ -32,7 +32,7 @@ Complexity is O(nnz). The `prev_idx` can be used to start the linear
 search at `prev_idx`, useful when multiple already sorted values
 are added.
 """
-function add!(v::InsertableSparseVector{Tv}, a::Tv, idx::Int, prev_idx::Int) where {Tv}
+function add!(v::InsertableSparseVector, a, idx::Integer, prev_idx::Integer)
     if push!(v.indices, idx, prev_idx)
         @inbounds v[idx] = a
     else
@@ -45,9 +45,9 @@ end
 """
 Add without providing a previous index.
 """
-@propagate_inbounds add!(v::InsertableSparseVector{Tv}, a::Tv, idx::Int) where {Tv} = add!(v, a, idx, v.indices.N)
+@propagate_inbounds add!(v::InsertableSparseVector, a, idx::Integer) = add!(v, a, idx, v.indices.N)
 
-function axpy!(a::Tv, A::SparseMatrixCSC{Tv}, column::Int, start::Int, y::InsertableSparseVector{Tv}) where {Tv}
+function axpy!(a, A::SparseMatrixCSC, column::Integer, start::Integer, y::InsertableSparseVector)
     prev_index = y.indices.N
     
     @inbounds for idx = start : A.colptr[column + 1] - 1
