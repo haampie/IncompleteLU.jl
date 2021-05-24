@@ -1,5 +1,5 @@
 import Base: setindex!, empty!, Vector
-import LinearAlgebra: axpy!
+import LinearAlgebra: axpy!, norm
 
 """
 `SparseVectorAccumulator` accumulates the sparse vector
@@ -108,7 +108,7 @@ function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator, j::Integer,
         row = y.nzind[idx]
         value = y.nzval[row]
 
-        if abs(value) ≥ drop || row == j
+        if (drop == 0 || norm(value) ≥ drop) || row == j
             total += 1
             y.nzind[total] = row
         end
