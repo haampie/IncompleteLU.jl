@@ -115,7 +115,7 @@ function append_col!(A::SparseMatrixCSC, y::SparseVectorAccumulator, j::Integer,
     end
 
     # Sort the retained values.
-    sort!(y.nzind, 1, total, Base.Sort.QuickSortAlg(), Base.Order.Forward)
+    sort!(y.nzind, 1, total, Base.Sort.QuickSort, Base.Order.Forward)
     
     @inbounds for idx = 1 : total
         row = y.nzind[idx]
